@@ -9,6 +9,7 @@
 const Stripe = require('stripe');
 const { Resend } = require('resend');
 const { Redis } = require('@upstash/redis');
+const crypto = require('crypto');
 
 module.exports.config = { api: { bodyParser: false } };
 
@@ -68,13 +69,16 @@ module.exports = async (req, res) => {
   const kvAvailable = !!((process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL) && (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN));
   if (kvAvailable) {
     const redis = new Redis({ url: (process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL), token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN) });
+    const emailKey = `email_index:${customerEmail.toLowerCase()}`;
     for (const item of cart) {
       for (const date of item.dates) {
         // Use the actual day-of-week mode so a Wednesday booked under an in-person
         // 2-day package lands in the Zoom list (matches capacity + auto-cancel).
         const dow = new Date(date + 'T00:00:00Z').getUTCDay();
         const dateMode = dow === 2 ? 'inperson' : (dow === 3 ? 'zoom' : item.mode);
+        const bookingId = crypto.randomUUID();
         const record = {
+          bookingId,
           paymentIntentId: pi.id,
           customerName,
           customerEmail,
@@ -82,12 +86,14 @@ module.exports = async (req, res) => {
           packageId: item.pid,
           packageName: item.name,
           packageAmountCents: item.amt,        // per-package price
-          packageSessions: (item.dates || []).length, // number of sessions in this package
+          packageSessions: (item.dates || []).length,
           amountPaidCents: pi.amount,          // full PI total (may cover multiple packages)
           bookedAt: new Date().toISOString(),
         };
         try {
           await redis.rpush(`bookings:${date}:${dateMode}`, JSON.stringify(record));
+          // Index for fast lookup at /cancel time
+          await redis.rpush(emailKey, `${date}|${dateMode}|${bookingId}`);
         } catch (e) {
           console.error(`Failed to record booking for ${date}:`, e);
         }
@@ -218,9 +224,9 @@ function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, cu
         </td></tr>
 
         <tr><td style="padding:24px 32px 8px;">
-          <h2 style="font-family:Georgia,serif;font-size:18px;color:#1a2845;font-weight:500;margin:0 0 8px;">Need to reschedule?</h2>
+          <h2 style="font-family:Georgia,serif;font-size:18px;color:#1a2845;font-weight:500;margin:0 0 8px;">Need to cancel or reschedule?</h2>
           <p style="margin:0;color:#6b6e7a;font-size:14px;line-height:1.6;">
-            Reply to this email or text us. Full refund if you cancel more than 48 hours before a class start time.
+            Manage your bookings yourself at <a href="https://dna1575-deploy.vercel.app/cancel.html" style="color:#a81e2c;font-weight:600;">cancel.html</a> &mdash; we'll email you a one-click link. Full refund 72+ hours out, 50% refund 48&ndash;72 hours out. For emergencies inside 48 hours, reply to this email or text us.
           </p>
         </td></tr>
 

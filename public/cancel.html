@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Manage Bookings — DNA1575</title>
+<meta name="description" content="Cancel or reschedule your DNA1575 SAT prep booking." />
+<meta name="theme-color" content="#1a2845" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a2845; --navy-deep: #0f1a30;
+    --crimson: #a81e2c; --crimson-bright: #c52333;
+    --cream: #f7f4ee; --paper: #fbfaf6;
+    --ink: #14182a; --muted: #6b6e7a;
+    --rule: #d9d4c7; --gold: #c8a96a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Manrope', -apple-system, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  nav {
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Fraunces', serif; font-weight: 600;
+    font-size: 22px; color: var(--navy);
+    letter-spacing: -0.01em;
+    text-decoration: none;
+  }
+  .brand .accent { color: var(--crimson); }
+  .nav-back {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .nav-back:hover { color: var(--crimson); }
+
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--crimson);
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    color: var(--navy);
+    font-size: clamp(32px, 5vw, 48px);
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    line-height: 1.1;
+  }
+  h1 em { font-style: italic; color: var(--crimson); font-weight: 300; }
+  .lead {
+    color: var(--muted);
+    font-size: 17px;
+    line-height: 1.6;
+    margin-bottom: 36px;
+    max-width: 560px;
+  }
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 32px;
+    margin-bottom: 20px;
+  }
+  .card h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--navy);
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+  .card .sub {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+  label.field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  input[type=email] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--ink);
+    background: var(--paper);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input[type=email]:focus {
+    outline: none;
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px rgba(26,40,69,0.1);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 24px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.1s;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary { background: var(--navy); color: var(--paper); }
+  .btn-primary:hover:not(:disabled) { background: var(--crimson); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary { background: transparent; color: var(--navy); border: 1px solid var(--navy); }
+  .btn-secondary:hover:not(:disabled) { background: var(--navy); color: var(--paper); }
+  .btn-danger { background: var(--crimson); color: var(--paper); }
+  .btn-danger:hover:not(:disabled) { background: var(--crimson-bright); }
+  .btn-row { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+  .btn-row .btn { flex: 1; min-width: 140px; }
+
+  .alert {
+    padding: 14px 18px;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-bottom: 16px;
+    line-height: 1.55;
+  }
+  .alert-info { background: var(--cream); border-left: 3px solid var(--navy); color: var(--ink); }
+  .alert-success { background: #e7f3eb; border-left: 3px solid #2d8a3e; color: #1e5a2a; }
+  .alert-error { background: #fbecee; border-left: 3px solid var(--crimson); color: #6e1620; }
+
+  .booking-card {
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 24px;
+    margin-bottom: 16px;
+    background: var(--paper);
+  }
+  .booking-card.cancelled { opacity: 0.55; background: var(--cream); }
+  .booking-name {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--navy);
+    margin-bottom: 4px;
+    letter-spacing: -0.005em;
+  }
+  .booking-mode {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--crimson);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .booking-date {
+    color: var(--ink);
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+  .booking-policy {
+    display: inline-block;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .policy-full { background: #e7f3eb; color: #1e5a2a; }
+  .policy-half { background: #fff4e0; color: #8b5a00; }
+  .policy-none { background: #fbecee; color: #6e1620; }
+
+  .reschedule-picker {
+    margin-top: 14px;
+    padding: 14px;
+    background: var(--cream);
+    border-radius: 4px;
+    display: none;
+  }
+  .reschedule-picker.active { display: block; }
+  .reschedule-picker label.field-label { margin-bottom: 8px; }
+  .reschedule-picker select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--paper);
+  }
+
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,26,48,0.7);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+  }
+  .confirm-overlay.active { display: flex; }
+  .confirm-modal {
+    background: var(--paper);
+    border-radius: 6px;
+    max-width: 440px;
+    width: 100%;
+    padding: 28px;
+  }
+  .confirm-modal h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    color: var(--navy);
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+  }
+  .confirm-modal p { color: var(--ink); font-size: 14px; line-height: 1.6; margin-bottom: 18px; }
+
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(247,244,238,0.3);
+    border-top-color: var(--paper);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .policy-note {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-top: 24px;
+    padding: 16px 18px;
+    background: var(--cream);
+    border-radius: 4px;
+  }
+  .policy-note strong { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="brand">DNA<span class="accent">1575</span></a>
+    <a href="index.html" class="nav-back">&larr; Back to site</a>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ===== Step 1: Email entry ===== -->
+  <section id="step-email">
+    <div class="eyebrow">Manage Bookings</div>
+    <h1>Cancel or <em>reschedule</em> a class.</h1>
+    <p class="lead">Enter the email address you used when booking. We'll send you a one-click link to see your upcoming classes.</p>
+
+    <div class="card">
+      <h2>Get a secure link</h2>
+      <div class="sub">No password needed. Link expires in 30 minutes.</div>
+      <form id="email-form" novalidate>
+        <label class="field-label" for="email">Email address</label>
+        <input type="email" id="email" autocomplete="email" placeholder="you@example.com" required />
+        <div class="btn-row">
+          <button type="submit" class="btn btn-primary" id="email-submit">Email me a link</button>
+        </div>
+      </form>
+      <div id="email-error" class="alert alert-error" style="display:none;margin-top:16px;"></div>
+      <div id="email-sent" class="alert alert-success" style="display:none;margin-top:16px;"><strong>Check your inbox.</strong> If we have a booking for that email, a manage-bookings link is on its way. Doesn't usually take more than a minute.</div>
+    </div>
+
+    <div class="policy-note">
+      <strong>Cancellation policy</strong> &mdash; 72+ hrs out: full refund or free reschedule. 48–72 hrs out: 50% refund or free reschedule. Under 48 hrs: locked in. <a href="index.html#contact" style="color:var(--crimson);">Contact us</a> for emergencies.
+    </div>
+  </section>
+
+  <!-- ===== Step 2: Booking list ===== -->
+  <section id="step-list" style="display:none;">
+    <div class="eyebrow">Your Bookings</div>
+    <h1>Your upcoming <em>classes.</em></h1>
+    <p class="lead" id="list-lead">Loading your bookings…</p>
+    <div id="list-error" class="alert alert-error" style="display:none;"></div>
+    <div id="bookings-container"></div>
+    <div id="list-empty" class="card" style="display:none;text-align:center;">
+      <div style="font-family:'Fraunces',serif;font-size:20px;color:var(--navy);margin-bottom:8px;">No upcoming bookings.</div>
+      <div style="color:var(--muted);font-size:14px;">If you think this is wrong, <a href="index.html#contact" style="color:var(--crimson);">contact us</a>.</div>
+    </div>
+    <div class="policy-note" style="margin-top:32px;">
+      <strong>Cancellation policy</strong> &mdash; 72+ hrs out: full refund or free reschedule. 48–72 hrs out: 50% refund or free reschedule. Under 48 hrs: locked in. <a href="index.html#contact" style="color:var(--crimson);">Contact us</a> for emergencies.
+    </div>
+  </section>
+
+</main>
+
+<!-- Confirmation modal -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-modal">
+    <h3 id="confirm-title">Are you sure?</h3>
+    <p id="confirm-msg"></p>
+    <div class="btn-row">
+      <button type="button" class="btn btn-secondary" id="confirm-cancel">Never mind</button>
+      <button type="button" class="btn btn-danger" id="confirm-go">Yes, do it</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = {
+    request: '/api/cancel-request',
+    lookup: '/api/cancel-lookup',
+    cancel: '/api/cancel-do',
+    reschedule: '/api/cancel-reschedule',
+  };
+
+  function $(id) { return document.getElementById(id); }
+
+  // Read token from URL — if present, jump straight to list view
+  const urlToken = new URLSearchParams(location.search).get('token');
+  if (urlToken) {
+    $('step-email').style.display = 'none';
+    $('step-list').style.display = 'block';
+    loadBookings(urlToken);
+  }
+
+  // ===== Email form =====
+  $('email-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = $('email').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showEmailError('Please enter a valid email.');
+      return;
+    }
+    $('email-error').style.display = 'none';
+    const btn = $('email-submit');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    try {
+      const res = await fetch(API.request, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showEmailError(data.error || 'Could not send link. Please try again.');
+      } else {
+        $('email-sent').style.display = 'block';
+        $('email-form').style.display = 'none';
+      }
+    } catch (err) {
+      showEmailError('Network error. Please try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Email me a link';
+    }
+  });
+  function showEmailError(msg) {
+    const el = $('email-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  // ===== Booking list =====
+  let currentToken = null;
+  let bookingsCache = [];
+
+  async function loadBookings(token) {
+    currentToken = token;
+    const lead = $('list-lead');
+    lead.textContent = 'Loading your bookings…';
+    $('list-error').style.display = 'none';
+    $('bookings-container').innerHTML = '';
+    $('list-empty').style.display = 'none';
+    try {
+      const res = await fetch(API.lookup + '?token=' + encodeURIComponent(token));
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        lead.textContent = '';
+        const el = $('list-error');
+        el.textContent = data.error || 'Could not load your bookings.';
+        el.style.display = 'block';
+        if (res.status === 401) {
+          el.innerHTML += ' <a href="cancel.html" style="color:var(--crimson);font-weight:600;">Request a new link &rarr;</a>';
+        }
+        return;
+      }
+      bookingsCache = data.bookings || [];
+      lead.textContent = data.bookings.length === 0
+        ? 'You have no upcoming bookings on this email.'
+        : `Signed in as ${data.email}. ${data.bookings.length} upcoming class${data.bookings.length === 1 ? '' : 'es'}.`;
+      if (data.bookings.length === 0) {
+        $('list-empty').style.display = 'block';
+      } else {
+        renderBookings(data.bookings);
+      }
+    } catch (err) {
+      lead.textContent = '';
+      const el = $('list-error');
+      el.textContent = 'Network error. Please refresh.';
+      el.style.display = 'block';
+    }
+  }
+
+  function renderBookings(bookings) {
+    const container = $('bookings-container');
+    container.innerHTML = '';
+    bookings.forEach(b => container.appendChild(renderBookingCard(b)));
+  }
+
+  function formatDate(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function renderBookingCard(b) {
+    const card = document.createElement('div');
+    card.className = 'booking-card';
+    card.dataset.bookingId = b.bookingId;
+    const modeLabel = b.mode === 'inperson' ? 'In-Person · Atlanta, GA' : 'Zoom · Live nationwide';
+    const refundDollars = ((b.perClassCents * b.policy.refundPct) / 100 / 100).toFixed(2);
+    let policyHtml = '';
+    let actionsHtml = '';
+    if (b.policy.tier === 'full') {
+      policyHtml = `<div class="booking-policy policy-full">Full refund available · 72+ hours out</div>`;
+      actionsHtml = `
+        <div class="btn-row">
+          <button type="button" class="btn btn-danger" data-act="cancel">Cancel · Refund $${refundDollars}</button>
+          <button type="button" class="btn btn-secondary" data-act="reschedule">Reschedule (free)</button>
+        </div>`;
+    } else if (b.policy.tier === 'half') {
+      policyHtml = `<div class="booking-policy policy-half">50% refund available · 48–72 hours out</div>`;
+      actionsHtml = `
+        <div class="btn-row">
+          <button type="button" class="btn btn-danger" data-act="cancel">Cancel · Refund $${refundDollars}</button>
+          <button type="button" class="btn btn-secondary" data-act="reschedule">Reschedule (free)</button>
+        </div>`;
+    } else {
+      policyHtml = `<div class="booking-policy policy-none">Locked in · under 48 hours</div>`;
+      actionsHtml = `<div style="font-size:13px;color:var(--muted);margin-top:10px;">Within 48 hours we can't refund or reschedule online. <a href="index.html#contact" style="color:var(--crimson);">Contact us</a> for emergencies.</div>`;
+    }
+    card.innerHTML = `
+      <div class="booking-mode">${escapeHtml(modeLabel)}</div>
+      <div class="booking-name">${escapeHtml(b.packageName || 'Your class')}</div>
+      <div class="booking-date">${escapeHtml(formatDate(b.date))} · 10:00 AM – 2:00 PM</div>
+      ${policyHtml}
+      ${actionsHtml}
+      <div class="reschedule-picker" data-resched-for="${b.bookingId}">
+        <label class="field-label" for="new-${b.bookingId}">Pick a new date</label>
+        <select id="new-${b.bookingId}"><option value="">Loading…</option></select>
+        <div class="resched-downgrade-note" style="display:none;margin-top:10px;padding:10px 12px;background:#fff4e0;border-left:3px solid #c89a00;border-radius:3px;font-size:12.5px;color:#5c4500;line-height:1.5;">
+          <strong>Heads up:</strong> Wednesdays are the <strong>Zoom format</strong>. If you switch from in-person to Zoom, the price difference (~$150) is <strong>not refunded</strong>.
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" data-act="resched-cancel">Never mind</button>
+          <button type="button" class="btn btn-primary" data-act="resched-go" disabled>Move my class</button>
+        </div>
+        <div class="resched-error alert alert-error" style="display:none;margin-top:12px;"></div>
+      </div>
+      <div class="card-status" style="display:none;margin-top:14px;"></div>
+    `;
+    card.querySelector('[data-act="cancel"]')?.addEventListener('click', () => onCancelClick(b, card));
+    card.querySelector('[data-act="reschedule"]')?.addEventListener('click', () => onRescheduleClick(b, card));
+    card.querySelector('[data-act="resched-cancel"]')?.addEventListener('click', () => {
+      card.querySelector('.reschedule-picker').classList.remove('active');
+    });
+    card.querySelector('[data-act="resched-go"]')?.addEventListener('click', () => onRescheduleSubmit(b, card));
+    return card;
+  }
+
+  // ===== Cancel flow =====
+  function onCancelClick(booking, card) {
+    const refundDollars = ((booking.perClassCents * booking.policy.refundPct) / 100 / 100).toFixed(2);
+    const tierTxt = booking.policy.tier === 'full' ? 'full' : '50%';
+    openConfirm({
+      title: 'Cancel this booking?',
+      msg: `You'll get a ${tierTxt} refund of $${refundDollars}, back to your original card in 5–10 business days. This cannot be undone.`,
+      onConfirm: async () => {
+        const statusEl = card.querySelector('.card-status');
+        statusEl.style.display = 'block';
+        statusEl.className = 'alert alert-info';
+        statusEl.innerHTML = '<span class="spinner"></span> Processing refund…';
+        try {
+          const res = await fetch(API.cancel, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: currentToken, date: booking.date, mode: booking.mode, bookingId: booking.bookingId }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            statusEl.className = 'alert alert-error';
+            statusEl.textContent = data.error || 'Cancellation failed. Please try again.';
+            return;
+          }
+          card.classList.add('cancelled');
+          // Hide actions, show success
+          card.querySelectorAll('.btn-row').forEach(el => el.style.display = 'none');
+          card.querySelector('.reschedule-picker').classList.remove('active');
+          statusEl.className = 'alert alert-success';
+          statusEl.innerHTML = `<strong>Cancelled.</strong> Refund of $${data.refundDollars} on its way to your card. Confirmation email sent.`;
+        } catch (err) {
+          statusEl.className = 'alert alert-error';
+          statusEl.textContent = 'Network error. Please refresh and try again.';
+        }
+      },
+    });
+  }
+
+  // ===== Reschedule flow =====
+  async function onRescheduleClick(booking, card) {
+    const picker = card.querySelector('.reschedule-picker');
+    picker.classList.add('active');
+    const select = picker.querySelector('select');
+    const goBtn = picker.querySelector('[data-act="resched-go"]');
+    select.innerHTML = '<option value="">Loading dates…</option>';
+    goBtn.disabled = true;
+
+    // Allowed days come from the booking's original package (Tue=2, Wed=3).
+    // Default to same day-of-week if the server didn't supply it (e.g. legacy booking).
+    const allowed = Array.isArray(booking.allowedDays) && booking.allowedDays.length
+      ? booking.allowedDays
+      : [new Date(booking.date + 'T00:00:00Z').getUTCDay()];
+
+    // Compute candidate dates within 14 days from today, ≥ June 1 2026
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const first = new Date(2026, 5, 1);
+    first.setHours(0, 0, 0, 0);
+    const start = today > first ? today : first;
+    const candidates = [];
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      if (allowed.includes(d.getDay())) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const iso = `${yyyy}-${mm}-${dd}`;
+        if (iso !== booking.date) candidates.push({ iso, mode: d.getDay() === 2 ? 'inperson' : 'zoom' });
+      }
+    }
+
+    // Pull availability for whichever modes are in play
+    const modesNeeded = [...new Set(candidates.map(c => c.mode))];
+    const availByMode = {};
+    await Promise.all(modesNeeded.map(async m => {
+      try {
+        const r = await fetch('/api/availability?mode=' + m);
+        const d = await r.json();
+        availByMode[m] = d.classes || {};
+      } catch { availByMode[m] = {}; }
+    }));
+
+    select.innerHTML = '';
+    if (candidates.length === 0) {
+      select.innerHTML = '<option value="">No upcoming dates available</option>';
+      return;
+    }
+    candidates.forEach(({ iso, mode }) => {
+      const a = (availByMode[mode] || {})[iso] || {};
+      const isCancelled = !!a.cancelled;
+      const booked = a.booked || 0;
+      const remaining = 6 - booked;
+      const opt = document.createElement('option');
+      opt.value = iso;
+      const modeTag = allowed.length > 1 ? ` · ${mode === 'inperson' ? 'In-Person' : 'Zoom'}` : '';
+      let label = formatDate(iso) + modeTag;
+      if (isCancelled) label += ' — cancelled';
+      else if (remaining <= 0) label += ' — full';
+      else label += ` — ${remaining} seat${remaining === 1 ? '' : 's'} left`;
+      opt.textContent = label;
+      if (isCancelled || remaining <= 0) opt.disabled = true;
+      select.appendChild(opt);
+    });
+    const downgradeNote = picker.querySelector('.resched-downgrade-note');
+    const updateDowngradeNote = () => {
+      const chosen = candidates.find(c => c.iso === select.value);
+      // Show note only for inperson-3-1day picking a Wednesday (Zoom format)
+      const showNote = chosen && booking.packageId === 'inperson-3-1day' && chosen.mode === 'zoom';
+      downgradeNote.style.display = showNote ? 'block' : 'none';
+    };
+    const firstEnabled = [...select.options].find(o => !o.disabled && o.value);
+    if (firstEnabled) {
+      select.value = firstEnabled.value;
+      goBtn.disabled = false;
+      updateDowngradeNote();
+    }
+    select.addEventListener('change', () => {
+      const o = select.options[select.selectedIndex];
+      goBtn.disabled = !o || !o.value || o.disabled;
+      updateDowngradeNote();
+    });
+  }
+
+  async function onRescheduleSubmit(booking, card) {
+    const picker = card.querySelector('.reschedule-picker');
+    const select = picker.querySelector('select');
+    const goBtn = picker.querySelector('[data-act="resched-go"]');
+    const errEl = picker.querySelector('.resched-error');
+    const newDate = select.value;
+    if (!newDate) return;
+    errEl.style.display = 'none';
+    goBtn.disabled = true;
+    goBtn.innerHTML = '<span class="spinner"></span> Moving…';
+    try {
+      const res = await fetch(API.reschedule, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: currentToken,
+          oldDate: booking.date,
+          oldMode: booking.mode,
+          bookingId: booking.bookingId,
+          newDate,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        errEl.textContent = data.error || 'Reschedule failed. Please try again.';
+        errEl.style.display = 'block';
+        goBtn.disabled = false;
+        goBtn.textContent = 'Move my class';
+        return;
+      }
+      // Update card UI
+      const statusEl = card.querySelector('.card-status');
+      statusEl.style.display = 'block';
+      statusEl.className = 'alert alert-success';
+      statusEl.innerHTML = `<strong>Rescheduled.</strong> Your class is now on <strong>${formatDate(newDate)}</strong>. Confirmation email sent.`;
+      card.classList.add('cancelled'); // dim the card to indicate moved
+      card.querySelectorAll('.btn-row').forEach(el => el.style.display = 'none');
+      picker.classList.remove('active');
+    } catch (err) {
+      errEl.textContent = 'Network error. Please refresh.';
+      errEl.style.display = 'block';
+      goBtn.disabled = false;
+      goBtn.textContent = 'Move my class';
+    }
+  }
+
+  // ===== Confirm modal =====
+  let pendingConfirm = null;
+  function openConfirm({ title, msg, onConfirm }) {
+    $('confirm-title').textContent = title;
+    $('confirm-msg').textContent = msg;
+    pendingConfirm = onConfirm;
+    $('confirm-overlay').classList.add('active');
+  }
+  function closeConfirm() {
+    pendingConfirm = null;
+    $('confirm-overlay').classList.remove('active');
+  }
+  $('confirm-cancel').addEventListener('click', closeConfirm);
+  $('confirm-go').addEventListener('click', async () => {
+    const fn = pendingConfirm;
+    closeConfirm();
+    if (fn) await fn();
+  });
+  $('confirm-overlay').addEventListener('click', (e) => {
+    if (e.target === $('confirm-overlay')) closeConfirm();
+  });
+</script>
+
+</body>
+</html>
