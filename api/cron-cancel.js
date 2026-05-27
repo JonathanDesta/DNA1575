@@ -1,9 +1,16 @@
 // /api/cron-cancel.js
 //
-// Vercel cron job (runs hourly). Auto-cancels any class that, 24 hours before
-// its start time, has fewer than MIN_ENROLLMENT students booked. Refunds every
-// booked student in full (per-class share of their package price) via Stripe
-// and emails them a notice via Resend.
+// Vercel cron job (runs once daily at 13:00 UTC ± 59 min — Hobby plan limit).
+// Auto-cancels any class that, by ~24 hours before its start time, has fewer
+// than MIN_ENROLLMENT students booked. Refunds every booked student in full
+// (per-class share of their package price) via Stripe and emails them a notice
+// via Resend.
+//
+// Timing math: cron scheduled at 13:00 UTC fires 13:00–13:59 UTC. Classes
+// start the next day at 14:00 UTC (10 AM EDT). So the cron runs 24h 1min to
+// 25h 0min before the next class — comfortably inside the "by 24 hours before"
+// rule with a small safety buffer. LOOK_AHEAD_HOURS = 26 ensures we catch
+// the class even on the latest-firing edge.
 //
 // Idempotency: we acquire a per-(date, mode) lock in KV before touching anything.
 // If the lock already exists, this run is a no-op for that class. The lock is
@@ -19,8 +26,8 @@ const { Redis } = require('@upstash/redis');
 
 const MIN_ENROLLMENT = 3;
 const CLASS_START_UTC_HOUR = 14; // 10:00 AM EDT = 14:00 UTC
-const LOOK_AHEAD_HOURS = 25;     // catch the 24h mark even if cron is slightly late
-const MAX_DAYS_TO_SCAN = 2;      // today + tomorrow is enough at hourly cadence
+const LOOK_AHEAD_HOURS = 26;     // covers 24h–25h lead with cron jitter
+const MAX_DAYS_TO_SCAN = 2;      // today + tomorrow is enough at daily cadence
 
 // Returns ISO date strings (YYYY-MM-DD, UTC) for upcoming Tuesdays/Wednesdays
 // whose start time falls inside (now, now + LOOK_AHEAD_HOURS].

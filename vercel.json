@@ -11,6 +11,6 @@
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
   "crons": [
-    { "path": "/api/cron-cancel", "schedule": "0 * * * *" }
+    { "path": "/api/cron-cancel", "schedule": "0 13 * * *" }
   ]
 }
