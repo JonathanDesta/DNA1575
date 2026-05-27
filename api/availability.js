@@ -40,14 +40,14 @@ module.exports = async (req, res) => {
   const offered = getOfferedDates(mode);
   const result = {};
 
-  const kvAvailable = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+  const kvAvailable = !!((process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL) && (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN));
   if (!kvAvailable) {
     // No KV — return all dates as 0 booked
     offered.forEach(d => { result[d] = { booked: 0 }; });
     return res.status(200).json({ classes: result, mode });
   }
 
-  const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
+  const redis = new Redis({ url: (process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL), token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN) });
 
   try {
     // Fetch all counters in one pipelined call
