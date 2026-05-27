@@ -1,0 +1,311 @@
+// /api/cron-cancel.js
+//
+// Vercel cron job (runs hourly). Auto-cancels any class that, 24 hours before
+// its start time, has fewer than MIN_ENROLLMENT students booked. Refunds every
+// booked student in full (per-class share of their package price) via Stripe
+// and emails them a notice via Resend.
+//
+// Idempotency: we acquire a per-(date, mode) lock in KV before touching anything.
+// If the lock already exists, this run is a no-op for that class. The lock is
+// never released, so a class can only ever be auto-cancelled once.
+//
+// Class start time: 10:00 AM Atlanta local time. Atlanta is on EDT (UTC-4)
+// during the operational months (June onward). If you extend into Nov–Mar
+// (EST, UTC-5), update CLASS_START_UTC_HOUR or compute DST dynamically.
+
+const Stripe = require('stripe');
+const { Resend } = require('resend');
+const { Redis } = require('@upstash/redis');
+
+const MIN_ENROLLMENT = 3;
+const CLASS_START_UTC_HOUR = 14; // 10:00 AM EDT = 14:00 UTC
+const LOOK_AHEAD_HOURS = 25;     // catch the 24h mark even if cron is slightly late
+const MAX_DAYS_TO_SCAN = 2;      // today + tomorrow is enough at hourly cadence
+
+// Returns ISO date strings (YYYY-MM-DD, UTC) for upcoming Tuesdays/Wednesdays
+// whose start time falls inside (now, now + LOOK_AHEAD_HOURS].
+function findUpcomingClasses(nowMs) {
+  const out = [];
+  const today = new Date(nowMs);
+  today.setUTCHours(0, 0, 0, 0);
+  for (let i = 0; i <= MAX_DAYS_TO_SCAN; i++) {
+    const d = new Date(today);
+    d.setUTCDate(today.getUTCDate() + i);
+    const dow = d.getUTCDay();
+    let mode = null;
+    if (dow === 2) mode = 'inperson';
+    else if (dow === 3) mode = 'zoom';
+    if (!mode) continue;
+    const startMs = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), CLASS_START_UTC_HOUR, 0, 0);
+    const hoursUntil = (startMs - nowMs) / (1000 * 60 * 60);
+    // Class must still be in the future, and within our lookahead window
+    if (hoursUntil > 0 && hoursUntil <= LOOK_AHEAD_HOURS) {
+      const iso = d.toISOString().slice(0, 10);
+      out.push({ iso, mode, startMs, hoursUntil });
+    }
+  }
+  return out;
+}
+
+module.exports = async (req, res) => {
+  // Vercel cron sends Authorization: Bearer <CRON_SECRET> when CRON_SECRET is set.
+  // Reject anything else so this endpoint can't be hit publicly.
+  const expected = process.env.CRON_SECRET;
+  if (expected) {
+    const got = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+    if (got !== expected) return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return res.status(500).json({ error: 'KV not configured' });
+  }
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.status(500).json({ error: 'Stripe not configured' });
+  }
+
+  const redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  });
+  const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+  const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+  const fromAddress = process.env.MAIL_FROM || 'DNA1575 <hello@dna1575.com>';
+  const replyTo = process.env.MAIL_REPLY_TO || 'dna1575prep@gmail.com';
+  const ccInternal = process.env.MAIL_CC_INTERNAL || '';
+
+  const now = Date.now();
+  const upcoming = findUpcomingClasses(now);
+  const summary = [];
+
+  for (const cls of upcoming) {
+    const lockKey = `cancelled:${cls.iso}:${cls.mode}`;
+    // Atomic lock: if already cancelled, skip.
+    let acquired;
+    try {
+      acquired = await redis.set(lockKey, new Date().toISOString(), { nx: true });
+    } catch (e) {
+      console.error('lock error', cls, e);
+      summary.push({ ...cls, action: 'error-lock' });
+      continue;
+    }
+
+    // Read bookings (we do this regardless so we can report "kept" classes).
+    let raw = [];
+    try {
+      raw = await redis.lrange(`bookings:${cls.iso}:${cls.mode}`, 0, -1) || [];
+    } catch (e) {
+      console.error('bookings read error', cls, e);
+      summary.push({ ...cls, action: 'error-read' });
+      // Release the lock so a later run can retry
+      if (acquired) { try { await redis.del(lockKey); } catch {} }
+      continue;
+    }
+    const bookings = raw.map(b => { try { return typeof b === 'string' ? JSON.parse(b) : b; } catch { return null; } }).filter(Boolean);
+    const enrolled = bookings.length;
+
+    if (enrolled >= MIN_ENROLLMENT) {
+      // Class will run as planned. Release the speculative lock.
+      if (acquired) { try { await redis.del(lockKey); } catch {} }
+      summary.push({ ...cls, action: 'kept', enrolled });
+      continue;
+    }
+
+    if (!acquired) {
+      // Already cancelled in a prior run.
+      summary.push({ ...cls, action: 'already-cancelled', enrolled });
+      continue;
+    }
+
+    // Process the cancellation.
+    const refundResults = [];
+    const emailResults = [];
+    for (const b of bookings) {
+      // Per-class refund = the package's price divided by its session count.
+      const sessions = Number(b.packageSessions) || 1;
+      const pkgAmount = Number(b.packageAmountCents) || Number(b.amountPaidCents) || 0;
+      const refundCents = Math.max(0, Math.round(pkgAmount / sessions));
+
+      try {
+        const refund = await stripe.refunds.create({
+          payment_intent: b.paymentIntentId,
+          amount: refundCents,
+          reason: 'requested_by_customer',
+          metadata: {
+            reason_internal: 'auto_cancel_under_enrolled',
+            class_date: cls.iso,
+            class_mode: cls.mode,
+            customer_email: b.customerEmail || '',
+          },
+        });
+        refundResults.push({ email: b.customerEmail, refundCents, refundId: refund.id, ok: true });
+      } catch (e) {
+        console.error('Refund failed', { date: cls.iso, mode: cls.mode, pi: b.paymentIntentId, err: e.message });
+        refundResults.push({ email: b.customerEmail, refundCents, ok: false, error: e.message });
+      }
+
+      if (resend && b.customerEmail) {
+        const refundDollars = (refundCents / 100).toFixed(2);
+        try {
+          await resend.emails.send({
+            from: fromAddress,
+            to: b.customerEmail,
+            cc: ccInternal ? ccInternal.split(',').map(s => s.trim()) : undefined,
+            reply_to: replyTo,
+            subject: `Class cancelled — ${formatDateNice(cls.iso)} — full refund issued`,
+            html: renderCancellationHtml({
+              firstName: (b.customerName || 'there').split(' ')[0],
+              classDate: cls.iso,
+              classMode: cls.mode,
+              refundDollars,
+              packageName: b.packageName || 'your class',
+            }),
+            text: renderCancellationText({
+              firstName: (b.customerName || 'there').split(' ')[0],
+              classDate: cls.iso,
+              classMode: cls.mode,
+              refundDollars,
+              packageName: b.packageName || 'your class',
+            }),
+          });
+          emailResults.push({ email: b.customerEmail, ok: true });
+        } catch (e) {
+          console.error('Email failed', { to: b.customerEmail, err: e.message });
+          emailResults.push({ email: b.customerEmail, ok: false, error: e.message });
+        }
+      }
+    }
+
+    // Also zero out the capacity counter so the date frees up for future use
+    // (won't actually re-open since it's in the past by the time anyone sees it,
+    // but keeps the KV tidy).
+    try { await redis.del(`cap:${cls.mode}:${cls.iso}`); } catch {}
+
+    summary.push({
+      ...cls,
+      action: 'cancelled',
+      enrolled,
+      refunds: refundResults,
+      emails: emailResults,
+    });
+  }
+
+  return res.status(200).json({ ranAt: new Date(now).toISOString(), processed: summary });
+};
+
+function formatDateNice(iso) {
+  const [y, mo, d] = iso.split('-').map(Number);
+  const date = new Date(Date.UTC(y, mo - 1, d));
+  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function renderCancellationHtml({ firstName, classDate, classMode, refundDollars, packageName }) {
+  const modeLabel = classMode === 'inperson' ? 'In-Person · Atlanta, GA' : 'Zoom · Live nationwide';
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f7f4ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#14182a;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f7f4ee;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px;background:#fbfaf6;border-radius:6px;overflow:hidden;">
+        <tr><td style="background:#1a2845;padding:28px 32px;">
+          <div style="font-family:Georgia,serif;font-size:24px;font-weight:600;color:#fbfaf6;letter-spacing:-0.01em;">
+            DNA<span style="color:#a81e2c;">1575</span>
+          </div>
+          <div style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#c8a96a;margin-top:4px;">SAT Prep Specialists</div>
+        </td></tr>
+
+        <tr><td style="padding:36px 32px 12px;">
+          <div style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#a81e2c;font-weight:700;margin-bottom:10px;">Class Cancelled</div>
+          <h1 style="font-family:Georgia,serif;font-size:28px;font-weight:500;color:#1a2845;margin:0 0 12px;letter-spacing:-0.01em;line-height:1.2;">Hi ${escapeHtml(firstName)} &mdash; bad news about ${escapeHtml(formatDateNice(classDate))}.</h1>
+          <p style="margin:0;color:#14182a;font-size:15px;line-height:1.6;">
+            Unfortunately we didn&rsquo;t hit our minimum of 3 students for this class, so we&rsquo;re cancelling it. We&rsquo;d rather refund you than run a half-empty session that wouldn&rsquo;t do justice to the format.
+          </p>
+        </td></tr>
+
+        <tr><td style="padding:20px 32px 4px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f1eee5;border-radius:4px;border-left:3px solid #a81e2c;">
+            <tr><td style="padding:18px 22px;">
+              <div style="font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#a81e2c;font-weight:700;margin-bottom:4px;">${escapeHtml(modeLabel)}</div>
+              <div style="font-family:Georgia,serif;font-size:18px;color:#1a2845;font-weight:500;margin-bottom:8px;">${escapeHtml(packageName)}</div>
+              <div style="color:#14182a;font-size:14px;">${escapeHtml(formatDateNice(classDate))}</div>
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <tr><td style="padding:20px 32px 8px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size:14px;">
+            <tr>
+              <td style="padding:10px 0;border-top:1px solid #d9d4c7;color:#6b6e7a;text-transform:uppercase;letter-spacing:0.1em;font-size:11px;font-weight:600;">Refund Issued</td>
+              <td style="padding:10px 0;border-top:1px solid #d9d4c7;color:#1a2845;font-weight:500;text-align:right;font-family:Georgia,serif;font-size:18px;">$${refundDollars}</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 0;border-top:1px solid #d9d4c7;color:#6b6e7a;text-transform:uppercase;letter-spacing:0.1em;font-size:11px;font-weight:600;">Method</td>
+              <td style="padding:10px 0;border-top:1px solid #d9d4c7;color:#1a2845;font-weight:500;text-align:right;">Back to original card</td>
+            </tr>
+          </table>
+          <p style="margin:14px 0 0;color:#6b6e7a;font-size:13px;line-height:1.6;">
+            Stripe normally posts refunds to your statement in 5&ndash;10 business days. You&rsquo;ll get a refund receipt from Stripe separately.
+          </p>
+        </td></tr>
+
+        <tr><td style="padding:24px 32px 8px;">
+          <h2 style="font-family:Georgia,serif;font-size:18px;color:#1a2845;font-weight:500;margin:0 0 8px;">Want to book a different date?</h2>
+          <p style="margin:0;color:#14182a;font-size:14px;line-height:1.6;">
+            Reply to this email or text us and we&rsquo;ll help you grab a seat on another class. If you booked a 2-day package and only one date got cancelled, the other date is unaffected.
+          </p>
+        </td></tr>
+
+        <tr><td style="padding:24px 32px 32px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #d9d4c7;padding-top:20px;font-size:13px;color:#6b6e7a;">
+            <tr>
+              <td style="vertical-align:top;padding-right:12px;width:50%;">
+                <div style="font-family:Georgia,serif;font-size:15px;color:#1a2845;font-weight:500;">Jonathan Desta</div>
+                <div style="font-style:italic;color:#a81e2c;font-size:12px;margin-bottom:6px;">Math · UChicago '30</div>
+                <div>jdjonathandesta@gmail.com</div>
+                <div>(678) 558-0650</div>
+              </td>
+              <td style="vertical-align:top;padding-left:12px;width:50%;">
+                <div style="font-family:Georgia,serif;font-size:15px;color:#1a2845;font-weight:500;">Alex Alexandrov</div>
+                <div style="font-style:italic;color:#a81e2c;font-size:12px;margin-bottom:6px;">Reading · Caltech '30</div>
+                <div>alex.alexandrov734@gmail.com</div>
+                <div>(470) 810-6513</div>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+
+        <tr><td style="background:#0f1a30;padding:18px 32px;font-size:12px;color:rgba(247,244,238,0.65);">
+          DNA1575 · SAT Prep Specialists · Atlanta, GA<br/>
+          Sorry to send this kind of email. Reach out if anything looks wrong with the refund amount.
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
+function renderCancellationText({ firstName, classDate, classMode, refundDollars, packageName }) {
+  const modeLabel = classMode === 'inperson' ? 'In-Person · Atlanta, GA' : 'Zoom · Live nationwide';
+  return [
+    `Hi ${firstName},`,
+    '',
+    `Bad news: your ${formatDateNice(classDate)} class has been cancelled.`,
+    '',
+    `We didn't hit our minimum of 3 students for this date, so we're cancelling rather than run a half-empty session.`,
+    '',
+    `PACKAGE: ${packageName}`,
+    `MODE:    ${modeLabel}`,
+    `DATE:    ${formatDateNice(classDate)}`,
+    '',
+    `REFUND ISSUED: $${refundDollars} (back to your original card, 5–10 business days)`,
+    '',
+    `Want to book a different date? Reply to this email or text us. If you booked a 2-day package and only one date got cancelled, the other date is unaffected.`,
+    '',
+    `— Jonathan & Alex`,
+    `jdjonathandesta@gmail.com · (678) 558-0650`,
+    `alex.alexandrov734@gmail.com · (470) 810-6513`,
+  ].join('\n');
+}

@@ -70,6 +70,10 @@ module.exports = async (req, res) => {
     const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
     for (const item of cart) {
       for (const date of item.dates) {
+        // Use the actual day-of-week mode so a Wednesday booked under an in-person
+        // 2-day package lands in the Zoom list (matches capacity + auto-cancel).
+        const dow = new Date(date + 'T00:00:00Z').getUTCDay();
+        const dateMode = dow === 2 ? 'inperson' : (dow === 3 ? 'zoom' : item.mode);
         const record = {
           paymentIntentId: pi.id,
           customerName,
@@ -77,11 +81,13 @@ module.exports = async (req, res) => {
           customerPhone,
           packageId: item.pid,
           packageName: item.name,
-          amountPaidCents: pi.amount,
+          packageAmountCents: item.amt,        // per-package price
+          packageSessions: (item.dates || []).length, // number of sessions in this package
+          amountPaidCents: pi.amount,          // full PI total (may cover multiple packages)
           bookedAt: new Date().toISOString(),
         };
         try {
-          await redis.rpush(`bookings:${date}:${item.mode}`, JSON.stringify(record));
+          await redis.rpush(`bookings:${date}:${dateMode}`, JSON.stringify(record));
         } catch (e) {
           console.error(`Failed to record booking for ${date}:`, e);
         }
