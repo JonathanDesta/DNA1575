@@ -2304,7 +2304,17 @@
     const availByMode = { inperson: availInp || {}, zoom: availZoom || {} };
 
     grid.innerHTML = '';
-    offered.forEach(iso => {
+    // Drop dates that have been auto-cancelled (under-enrollment).
+    const visible = offered.filter(iso => {
+      const dateMode = modeForDay(formatDate(iso).dayNum);
+      const a = (availByMode[dateMode] || {})[iso];
+      return !(a && a.cancelled);
+    });
+    if (visible.length === 0) {
+      grid.innerHTML = '<div class="dp-empty">No classes available right now. Check back soon or contact us.</div>';
+      return;
+    }
+    visible.forEach(iso => {
       const { day, md, dayNum } = formatDate(iso);
       const dateMode = modeForDay(dayNum);
       const avail = availByMode[dateMode] || {};

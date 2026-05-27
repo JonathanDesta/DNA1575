@@ -50,19 +50,23 @@ module.exports = async (req, res) => {
   const redis = new Redis({ url: (process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL), token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN) });
 
   try {
-    // Fetch all counters in one pipelined call
-    const keys = offered.map(d => `cap:${mode}:${d}`);
-    const values = await redis.mget(...keys);
+    // Fetch both capacity counters AND cancelled flags in one pipelined call.
+    const capKeys    = offered.map(d => `cap:${mode}:${d}`);
+    const cancelKeys = offered.map(d => `cancelled:${d}:${mode}`);
+    const values = await redis.mget(...capKeys, ...cancelKeys);
+    const capValues    = values.slice(0, offered.length);
+    const cancelValues = values.slice(offered.length);
     offered.forEach((d, i) => {
-      const v = values[i];
+      const v = capValues[i];
       const booked = typeof v === 'number' ? v : (v ? parseInt(v, 10) || 0 : 0);
-      result[d] = { booked: Math.max(0, booked) };
+      const cancelled = !!cancelValues[i];
+      result[d] = { booked: Math.max(0, booked), cancelled };
     });
     return res.status(200).json({ classes: result, mode });
   } catch (err) {
     console.error('Availability fetch error:', err);
     // Soft-fail: return all 0 so the picker is still usable
-    offered.forEach(d => { result[d] = { booked: 0 }; });
+    offered.forEach(d => { result[d] = { booked: 0, cancelled: false }; });
     return res.status(200).json({ classes: result, mode, degraded: true });
   }
 };

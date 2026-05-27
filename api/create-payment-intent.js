@@ -110,6 +110,24 @@ module.exports = async (req, res) => {
     const redis = kvAvailable ? new Redis({ url: (process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL), token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN) }) : null;
 
     if (kvAvailable) {
+      // First pass: reject any date that has been auto-cancelled.
+      try {
+        const cancelKeys = allReservations.map(r => `cancelled:${r.date}:${r.mode}`);
+        const cancelFlags = cancelKeys.length ? await redis.mget(...cancelKeys) : [];
+        for (let i = 0; i < allReservations.length; i++) {
+          if (cancelFlags[i]) {
+            return res.status(409).json({
+              error: `Sorry — ${allReservations[i].date} was cancelled due to under-enrollment. Please pick a different date.`,
+              cancelledDate: allReservations[i].date,
+            });
+          }
+        }
+      } catch (kvErr) {
+        console.error('KV cancel-check error:', kvErr);
+        return res.status(500).json({ error: 'Could not verify class status. Please try again.' });
+      }
+
+      // Second pass: atomic capacity reservation.
       for (const r of allReservations) {
         try {
           const newCount = await redis.incr(r.key);
