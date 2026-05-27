@@ -63,7 +63,7 @@ module.exports = async (req, res) => {
     if (got !== expected) return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+  if (!(process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL) || !(process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN)) {
     return res.status(500).json({ error: 'KV not configured' });
   }
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -71,8 +71,8 @@ module.exports = async (req, res) => {
   }
 
   const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    url: (process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL),
+    token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN),
   });
   const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
   const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
