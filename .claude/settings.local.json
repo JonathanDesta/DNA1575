@@ -3,7 +3,9 @@
     "allow": [
       "Bash(py --version)",
       "Bash(py -3 --version)",
-      "Bash(py -c ' *)"
+      "Bash(py -c ' *)",
+      "Bash(git fetch *)",
+      "Bash(git ls-tree *)"
     ]
   }
 }

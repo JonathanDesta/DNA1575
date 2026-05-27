@@ -1700,7 +1700,6 @@
       <ul class="price-features">
         <li>Class of up to 3 students</li>
         <li>Tuesdays · 10:00 AM – 2:00 PM</li>
-        <li>More individual attention</li>
         <li>Snacks &amp; Gatorade included</li>
       </ul>
       <button type="button" class="price-btn" data-package="inperson-3-1day">Pick a Date</button>
@@ -1717,7 +1716,7 @@
       <ul class="price-features">
         <li>Class of up to 3 students</li>
         <li>Pick 2 days · swap one for a Wednesday Zoom if you want</li>
-        <li>Highest individual attention level</li>
+        <li>8 hours total · Math + Reading rotation twice</li>
         <li>Snacks &amp; Gatorade included</li>
       </ul>
       <button type="button" class="price-btn" data-package="inperson-3-2day">Pick 2 Dates</button>
@@ -1738,7 +1737,7 @@
         <li>Class of up to 3 students</li>
         <li>Wednesdays · 10:00 AM – 2:00 PM</li>
         <li>Live, interactive instruction</li>
-        <li>Anywhere in the U.S.</li>
+        <li>Attend from anywhere in the U.S.</li>
       </ul>
       <button type="button" class="price-btn" data-package="zoom-3-1day">Pick a Date</button>
     </div>
@@ -1754,8 +1753,8 @@
       <ul class="price-features">
         <li>Class of up to 3 students</li>
         <li>Two Wednesdays · 10:00 AM – 2:00 PM</li>
-        <li>Highest individual attention level</li>
-        <li>Anywhere in the U.S.</li>
+        <li>8 hours total · Math + Reading rotation twice</li>
+        <li>Attend from anywhere in the U.S.</li>
       </ul>
       <button type="button" class="price-btn" data-package="zoom-3-2day">Pick 2 Dates</button>
     </div>
@@ -1893,6 +1892,9 @@
       <div style="margin-top:18px;padding:14px 16px;background:var(--cream);border-left:3px solid var(--gold);border-radius:4px;font-size:13px;color:var(--ink);line-height:1.55;">
         <strong style="color:var(--crimson);">Refer &amp; save $30.</strong> For every friend who books, you get $30 off your next class. After they enroll, <a href="#contact" style="color:var(--navy);font-weight:600;">email or text us</a> their name to claim your credit.
       </div>
+      <div style="margin-top:8px;padding:12px 14px;background:var(--cream);border-left:3px solid var(--navy);border-radius:4px;font-size:12.5px;color:var(--ink);line-height:1.5;">
+        <strong>Save $5</strong> by paying with <strong>Zelle</strong> or <strong>Venmo</strong> instead &mdash; <a href="#contact" style="color:var(--navy);font-weight:600;">contact us</a> for handles.
+      </div>
     </div>
 
     <!-- ===== Panel: Cart ===== -->
@@ -1911,6 +1913,12 @@
       <div class="cart-actions">
         <button type="button" class="dp-btn" id="cart-keep-shopping">Keep Shopping</button>
         <button type="button" class="dp-btn primary" id="cart-checkout">Check Out</button>
+      </div>
+      <div style="margin-top:18px;padding:14px 16px;background:var(--cream);border-left:3px solid var(--gold);border-radius:4px;font-size:13px;color:var(--ink);line-height:1.55;">
+        <strong style="color:var(--crimson);">Refer &amp; save $30.</strong> For every friend who books, you get $30 off your next class. After they enroll, <a href="#contact" style="color:var(--navy);font-weight:600;">email or text us</a> their name to claim your credit.
+      </div>
+      <div style="margin-top:8px;padding:12px 14px;background:var(--cream);border-left:3px solid var(--navy);border-radius:4px;font-size:12.5px;color:var(--ink);line-height:1.5;">
+        <strong>Save $5</strong> by paying with <strong>Zelle</strong> or <strong>Venmo</strong> instead &mdash; <a href="#contact" style="color:var(--navy);font-weight:600;">contact us</a> for handles.
       </div>
     </div>
 
@@ -2030,7 +2038,7 @@
     'zoom-3-2day':     { name: 'Class of 3 · Two-Day Package', mode: 'zoom',     sessions: 2, price: 299, modeLabel: 'Zoom · Live nationwide' },
   };
 
-  const MAX_CAPACITY = 3;
+  const MAX_CAPACITY = 6; // 2 parallel groups of 3 students per date
   const BOOKING_WINDOW_DAYS = 14;
   const FIRST_AVAILABLE_DATE = new Date(2026, 5, 1); // June 1, 2026 (first week of June)
   FIRST_AVAILABLE_DATE.setHours(0,0,0,0);

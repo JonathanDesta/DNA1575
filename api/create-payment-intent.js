@@ -29,7 +29,7 @@ const PACKAGES = {
   'zoom-3-2day':     { name: 'Class of 3 · Two-Day Package · Zoom',      mode: 'zoom',     sessions: 2, amount: 29900 },
 };
 
-const MAX_CAPACITY = 3;
+const MAX_CAPACITY = 6; // 2 parallel groups of 3 students per date
 const BOOKING_WINDOW_DAYS = 14;
 // First class is the first week of June 2026 (UTC midnight on June 1).
 const FIRST_AVAILABLE_MS = Date.UTC(2026, 5, 1);
