@@ -116,10 +116,12 @@ module.exports = async (req, res) => {
       return res.status(409).json({ error: 'That class is no longer available.' });
     }
 
-    // --- NEW DOUBLE-BOOKING FIX ---
+    // Block double-booking: if this customer already has a non-cancelled booking
+    // on the target date (from any package), reject the reschedule so they don't
+    // end up holding two seats for the same class.
     const allRefs = await redis.lrange(`email_index:${email}`, 0, -1) || [];
     for (const ref of allRefs) {
-      const [refDate, refMode, refId] = String(ref).split('|');
+      const [refDate, , refId] = String(ref).split('|');
       if (refDate === newDate && refId !== bookingId) {
         const isSelfCancelled = await redis.get(`booking_cancelled:${refId}`);
         if (!isSelfCancelled) {
@@ -127,7 +129,6 @@ module.exports = async (req, res) => {
         }
       }
     }
-    // --- END FIX ---
 
     // Acquire booking cancel lock first (idempotency for double-clicks)
     const lockOk = await redis.set(`booking_cancelled:${bookingId}`, new Date().toISOString(), { nx: true });

@@ -196,7 +196,7 @@ module.exports = async (req, res) => {
     for (const b of finalRecords) {
       // Per-class refund = the package's price divided by its session count.
       const sessions = Number(b.packageSessions) || 1;
-      const pkgAmount = Number(b.packageAmountCents) || 0;
+      const pkgAmount = Number(b.packageAmountCents) || Number(b.amountPaidCents) || 0;
       const refundCents = Math.max(0, Math.round(pkgAmount / sessions));
 
       let refundOk = false;
@@ -211,6 +211,9 @@ module.exports = async (req, res) => {
             class_mode: cls.mode,
             customer_email: b.customerEmail || '',
           },
+        }, {
+          // Idempotency key tied to bookingId so a re-run never double-refunds.
+          idempotencyKey: b.bookingId ? `auto-cancel:${b.bookingId}` : `auto-cancel-pi:${b.paymentIntentId}:${cls.iso}`,
         });
         refundResults.push({ email: b.customerEmail, refundCents, refundId: refund.id, ok: true });
         refundOk = true;

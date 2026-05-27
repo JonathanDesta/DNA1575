@@ -34,7 +34,8 @@ const BOOKING_WINDOW_DAYS = 14;
 // First class is the first week of June 2026 (UTC midnight on June 1).
 const FIRST_AVAILABLE_MS = Date.UTC(2026, 5, 1);
 
-// For 2-day packages the student can mix in the other format's day.
+// The in-person 2-day package may include a Wednesday (Zoom) — see PACKAGES.
+// Other packages (Zoom 1-day, Zoom 2-day, in-person 1-day) stay single-mode.
 function isOfferedDate(mode, isoDate, sessions) {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);

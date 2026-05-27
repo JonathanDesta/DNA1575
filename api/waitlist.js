@@ -58,9 +58,10 @@ module.exports = async (req, res) => {
         const fromAddress = process.env.MAIL_FROM || 'DNA1575 <hello@dna1575.com>';
         const ccInternal = process.env.MAIL_CC_INTERNAL || '';
         const fallbackTo = process.env.MAIL_REPLY_TO || 'dna1575prep@gmail.com';
-        
+        // Send to MAIL_CC_INTERNAL if set, otherwise fall back to the reply-to
+        // address so a waitlist join is never silently dropped.
         let toAddresses = ccInternal.split(',').map(s => s.trim()).filter(Boolean);
-        if (toAddresses.length === 0) toAddresses = [fallbackTo]; // <-- FIX: Ensure there is always a recipient
+        if (toAddresses.length === 0) toAddresses = [fallbackTo];
 
         if (toAddresses.length) {
           await resend.emails.send({

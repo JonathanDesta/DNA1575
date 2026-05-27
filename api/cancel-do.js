@@ -89,7 +89,8 @@ module.exports = async (req, res) => {
     const lockOk = await redis.set(`booking_cancelled:${bookingId}`, new Date().toISOString(), { nx: true });
     if (!lockOk) return res.status(409).json({ error: 'This booking is already cancelled.' });
 
-    // Issue refund
+    // Issue refund. Use an idempotency key tied to the bookingId so a retry
+    // after a network blip doesn't create a second refund.
     const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
     let refund;
     try {
@@ -105,6 +106,8 @@ module.exports = async (req, res) => {
           class_mode: mode,
           customer_email: email,
         },
+      }, {
+        idempotencyKey: `cancel-do:${bookingId}`,
       });
     } catch (e) {
       // Release the lock so they can retry
@@ -128,7 +131,7 @@ module.exports = async (req, res) => {
           to: email,
           cc: ccInternal ? ccInternal.split(',').map(s => s.trim()).filter(Boolean) : undefined,
           reply_to: replyTo,
-          subject: `Cancellation confirmed — ${formatDateNice(date)}`,
+          subject: `Cancellation confirmed — ${formatDateNice(date)} — $${(refundCents / 100).toFixed(2)} refund`,
           html: renderHtml({ rec, date, mode, refundCents, policy }),
           text: renderText({ rec, date, mode, refundCents, policy }),
         });

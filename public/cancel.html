@@ -555,10 +555,17 @@
   async function onRescheduleClick(booking, card) {
     const picker = card.querySelector('.reschedule-picker');
     picker.classList.add('active');
-    const select = picker.querySelector('select');
+    // Replace the select element with a fresh clone so any previously-attached
+    // change listeners (from earlier reschedule clicks) don't accumulate.
+    const oldSelect = picker.querySelector('select');
+    const select = oldSelect.cloneNode(false);
+    oldSelect.parentNode.replaceChild(select, oldSelect);
     const goBtn = picker.querySelector('[data-act="resched-go"]');
     select.innerHTML = '<option value="">Loading dates…</option>';
     goBtn.disabled = true;
+    // Clear any stale error message from a prior reschedule attempt.
+    const errClear = picker.querySelector('.resched-error');
+    if (errClear) errClear.style.display = 'none';
 
     // Allowed days come from the booking's original package (Tue=2, Wed=3).
     // Default to same day-of-week if the server didn't supply it (e.g. legacy booking).
@@ -629,6 +636,11 @@
       select.value = firstEnabled.value;
       goBtn.disabled = false;
       updateDowngradeNote();
+    } else {
+      // Every upcoming candidate is full or cancelled — show a hint.
+      const errEl = picker.querySelector('.resched-error');
+      errEl.innerHTML = 'All upcoming dates are full or cancelled. <a href="index.html#contact" style="color:var(--crimson);font-weight:600;">Contact us</a> for help.';
+      errEl.style.display = 'block';
     }
     select.addEventListener('change', () => {
       const o = select.options[select.selectedIndex];

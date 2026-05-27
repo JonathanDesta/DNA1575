@@ -124,29 +124,38 @@ module.exports = async (req, res) => {
   if (redis) {
     const emailKey = `email_index:${customerEmail.toLowerCase()}`;
     for (const item of cart) {
+      const confirmedDates = [];
+      const raceRefundedDates = [];
       for (const date of item.dates) {
         // Use the actual day-of-week mode so a Wednesday booked under an in-person
         // 2-day package lands in the Zoom list (matches capacity + auto-cancel).
         const dow = new Date(date + 'T00:00:00Z').getUTCDay();
         const dateMode = dow === 2 ? 'inperson' : (dow === 3 ? 'zoom' : item.mode);
 
-        // Inside the loop for (const date of item.dates) {
+        // Race safety: if the class was auto-cancelled by the cron job between
+        // when this customer started checkout and when their webhook fired, we
+        // skip storing a booking record AND issue a per-class refund here so
+        // they aren't charged for a class they can no longer attend.
         const isCancelled = await redis.get(`cancelled:${date}:${dateMode}`);
-if (isCancelled) {
-        // The class was auto-cancelled while they were on the checkout page.
-        // Automatically issue an immediate refund for this specific item.
+        if (isCancelled) {
+          const perClassCents = Math.round((item.amt || 0) / (item.dates.length || 1));
           try {
             await stripe.refunds.create({
               payment_intent: pi.id,
-              amount: Math.round(item.amt / (item.dates.length || 1)), // <-- FIX: Refund only the per-class portion
+              amount: perClassCents,
               reason: 'requested_by_customer',
-              metadata: { reason_internal: 'auto_cancelled_during_checkout', class_date: date }
+              metadata: { reason_internal: 'auto_cancelled_during_checkout', class_date: date },
+            }, {
+              // Idempotency: a webhook retry shouldn't double-refund this date.
+              idempotencyKey: `race-refund:${pi.id}:${date}`,
             });
           } catch (e) {
-            console.error('Immediate refund failed for cancelled class:', e);
+            console.error('Immediate refund failed for cancelled class:', { date, dateMode, err: e.message });
           }
-          continue; // Skip adding them to the booking list for the cancelled class
+          raceRefundedDates.push(date);
+          continue; // Don't store a booking for this cancelled class
         }
+
         const bookingId = crypto.randomUUID();
         const record = {
           bookingId,
@@ -165,12 +174,22 @@ if (isCancelled) {
           await redis.rpush(`bookings:${date}:${dateMode}`, JSON.stringify(record));
           // Index for fast lookup at /cancel time
           await redis.rpush(emailKey, `${date}|${dateMode}|${bookingId}`);
+          confirmedDates.push(date);
         } catch (e) {
           console.error(`Failed to record booking for ${date}:`, e);
         }
       }
+      // Mutate the cart entry in place so the confirmation email only lists the
+      // dates that actually got booked. Race-refunded dates are reported in a
+      // separate notice (see below).
+      item.dates = confirmedDates;
+      item.raceRefundedDates = raceRefundedDates;
     }
   }
+
+  // Drop any cart items that had ALL dates race-refunded (nothing to confirm).
+  const confirmedCart = cart.filter(item => Array.isArray(item.dates) && item.dates.length > 0);
+  const allRaceRefunds = cart.flatMap(item => (item.raceRefundedDates || []).map(d => ({ date: d, mode: item.mode, packageName: item.name })));
 
   // Send branded confirmation email
   if (!process.env.RESEND_API_KEY) {
@@ -184,13 +203,17 @@ if (isCancelled) {
   const ccInternal = process.env.MAIL_CC_INTERNAL || '';
 
   const firstName = customerName.split(' ')[0];
-  const totalSeats = cart.reduce((s, i) => s + i.dates.length, 0);
-  const hasInPerson = cart.some(i => i.mode === 'inperson');
-  const hasZoom = cart.some(i => i.mode === 'zoom');
+  const totalSeats = confirmedCart.reduce((s, i) => s + i.dates.length, 0);
+  const hasInPerson = confirmedCart.some(i => i.mode === 'inperson');
+  const hasZoom = confirmedCart.some(i => i.mode === 'zoom');
 
-  const subject = totalSeats === 1
-    ? `You're booked — DNA1575 SAT Prep`
-    : `You're booked — ${totalSeats} classes confirmed`;
+  // If every date got race-refunded, send a different message — nothing confirmed.
+  const everythingRaceCancelled = totalSeats === 0 && allRaceRefunds.length > 0;
+  const subject = everythingRaceCancelled
+    ? `About your DNA1575 order — those classes were just cancelled`
+    : totalSeats === 1
+      ? `You're booked — DNA1575 SAT Prep${allRaceRefunds.length ? ' (with notes)' : ''}`
+      : `You're booked — ${totalSeats} class${totalSeats === 1 ? '' : 'es'} confirmed${allRaceRefunds.length ? ' (with notes)' : ''}`;
 
   const siteOrigin = process.env.SITE_URL
     || ((req.headers && req.headers['x-forwarded-proto'] && req.headers['x-forwarded-host'])
@@ -198,8 +221,8 @@ if (isCancelled) {
         : 'https://dna1575-deploy.vercel.app');
   const cancelUrl = `${siteOrigin.replace(/\/$/, '')}/cancel.html`;
 
-  const html = renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, cancelUrl });
-  const text = renderEmailText({ firstName, cart, amountPaid, cancelUrl });
+  const html = renderEmailHtml({ firstName, cart: confirmedCart, amountPaid, hasInPerson, hasZoom, cancelUrl, raceRefunds: allRaceRefunds });
+  const text = renderEmailText({ firstName, cart: confirmedCart, amountPaid, cancelUrl, raceRefunds: allRaceRefunds });
 
   try {
     await resend.emails.send({
@@ -228,7 +251,7 @@ function formatDateNice(iso) {
   return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
-function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, cancelUrl }) {
+function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, cancelUrl, raceRefunds = [] }) {
   const itemBlocks = cart.map(item => {
     const dateRows = item.dates.map(d => `
       <tr><td style="padding:8px 0;color:#1a2845;font-size:14px;">${formatDateNice(d)}</td></tr>
@@ -251,6 +274,9 @@ function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, ca
   const zoomNote = hasZoom
     ? `<p style="margin:0;color:#14182a;font-size:14px;line-height:1.6;"><strong>Zoom link:</strong> Sent the day before each class. Camera on is encouraged but not required.</p>`
     : '';
+  const raceRefundNote = raceRefunds.length
+    ? `<tr><td style="padding:18px 32px 8px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fff4e0;border-radius:4px;border-left:3px solid #c89a00;"><tr><td style="padding:16px 20px;"><div style="font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8b5a00;font-weight:700;margin-bottom:6px;">Heads up — partial refund</div><div style="color:#5c4500;font-size:14px;line-height:1.6;">${raceRefunds.length === 1 ? 'One of the classes' : 'Some of the classes'} you tried to book got cancelled due to under-enrollment between the time you started checkout and the time your payment confirmed. We&rsquo;ve automatically refunded the affected ${raceRefunds.length === 1 ? 'portion' : 'portions'} (${raceRefunds.map(r => escapeHtml(formatDateNice(r.date))).join('; ')}). Stripe will post the refund in 5&ndash;10 business days. Reply to this email if anything looks wrong.</div></td></tr></table></td></tr>`
+    : '';
 
   return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -266,10 +292,12 @@ function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, ca
         </td></tr>
 
         <tr><td style="padding:36px 32px 12px;">
-          <div style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#a81e2c;font-weight:700;margin-bottom:10px;">Booking Confirmed</div>
-          <h1 style="font-family:Georgia,serif;font-size:30px;font-weight:500;color:#1a2845;margin:0 0 12px;letter-spacing:-0.01em;line-height:1.15;">You're booked, ${escapeHtml(firstName)}.</h1>
+          <div style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#a81e2c;font-weight:700;margin-bottom:10px;">${cart.length === 0 ? 'Order Update' : 'Booking Confirmed'}</div>
+          <h1 style="font-family:Georgia,serif;font-size:30px;font-weight:500;color:#1a2845;margin:0 0 12px;letter-spacing:-0.01em;line-height:1.15;">${cart.length === 0 ? `Hi ${escapeHtml(firstName)} &mdash; about that order.` : `You're booked, ${escapeHtml(firstName)}.`}</h1>
           <p style="margin:0;color:#6b6e7a;font-size:15px;line-height:1.55;">
-            Thanks for reserving with DNA1575. Your class details are below. Save this email or add the dates to your calendar.
+            ${cart.length === 0
+              ? 'The class(es) you tried to book all got cancelled due to under-enrollment between checkout and payment confirmation. We&rsquo;re refunding everything &mdash; see below.'
+              : 'Thanks for reserving with DNA1575. Your class details are below. Save this email or add the dates to your calendar.'}
           </p>
         </td></tr>
 
@@ -277,19 +305,23 @@ function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, ca
           ${itemBlocks}
         </td></tr>
 
+        ${raceRefundNote}
+
         <tr><td style="padding:8px 32px 8px;">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size:14px;">
             <tr>
               <td style="padding:10px 0;border-top:1px solid #d9d4c7;color:#6b6e7a;text-transform:uppercase;letter-spacing:0.1em;font-size:11px;font-weight:600;">Total Paid</td>
               <td style="padding:10px 0;border-top:1px solid #d9d4c7;color:#1a2845;font-weight:500;text-align:right;font-family:Georgia,serif;font-size:18px;">$${amountPaid}</td>
             </tr>
+            ${cart.length === 0 ? '' : `
             <tr>
               <td style="padding:10px 0;border-top:1px solid #d9d4c7;color:#6b6e7a;text-transform:uppercase;letter-spacing:0.1em;font-size:11px;font-weight:600;">Class Time</td>
               <td style="padding:10px 0;border-top:1px solid #d9d4c7;color:#1a2845;font-weight:500;text-align:right;">4 hours (110 min · 20 min break · 110 min)</td>
-            </tr>
+            </tr>`}
           </table>
         </td></tr>
 
+        ${cart.length === 0 ? '' : `
         <tr><td style="padding:24px 32px 8px;">
           <h2 style="font-family:Georgia,serif;font-size:18px;color:#1a2845;font-weight:500;margin:0 0 12px;">What to bring</h2>
           <ul style="margin:0;padding:0 0 0 18px;color:#14182a;font-size:14px;line-height:1.7;">
@@ -302,14 +334,15 @@ function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, ca
         <tr><td style="padding:18px 32px 8px;">
           ${locationNote}
           ${zoomNote}
-        </td></tr>
+        </td></tr>`}
 
+        ${cart.length === 0 ? '' : `
         <tr><td style="padding:24px 32px 8px;">
           <h2 style="font-family:Georgia,serif;font-size:18px;color:#1a2845;font-weight:500;margin:0 0 8px;">Need to cancel or reschedule?</h2>
           <p style="margin:0;color:#6b6e7a;font-size:14px;line-height:1.6;">
             Manage your bookings yourself at <a href="${escapeHtml(cancelUrl)}" style="color:#a81e2c;font-weight:600;">${escapeHtml(cancelUrl)}</a> &mdash; we'll email you a one-click link. Full refund 72+ hours out, 50% refund 48&ndash;72 hours out. For emergencies inside 48 hours, reply to this email or text us.
           </p>
-        </td></tr>
+        </td></tr>`}
 
         <tr><td style="padding:24px 32px 32px;">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #d9d4c7;padding-top:20px;font-size:13px;color:#6b6e7a;">
@@ -340,25 +373,36 @@ function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, ca
 </body></html>`;
 }
 
-function renderEmailText({ firstName, cart, amountPaid, cancelUrl }) {
-  const lines = [`You're booked, ${firstName}.`, '', 'Thanks for reserving with DNA1575.', ''];
+function renderEmailText({ firstName, cart, amountPaid, cancelUrl, raceRefunds = [] }) {
+  const lines = cart.length === 0
+    ? [`Hi ${firstName} — about that order.`, '', 'The class(es) you tried to book all got cancelled due to under-enrollment between checkout and payment confirmation. We\'re refunding everything — details below.', '']
+    : [`You're booked, ${firstName}.`, '', 'Thanks for reserving with DNA1575.', ''];
   for (const item of cart) {
     lines.push(`PACKAGE: ${item.name}`);
     lines.push(`Mode: ${item.mode === 'inperson' ? 'In-Person · Atlanta, GA' : 'Zoom · Live nationwide'}`);
     for (const d of item.dates) lines.push(`  - ${formatDateNice(d)}`);
     lines.push('');
   }
+  if (raceRefunds.length) {
+    lines.push('HEADS UP — PARTIAL REFUND');
+    lines.push(`${raceRefunds.length === 1 ? 'One of your classes' : 'Some of your classes'} got cancelled due to under-enrollment while you were checking out:`);
+    for (const r of raceRefunds) lines.push(`  - ${formatDateNice(r.date)} — refunded`);
+    lines.push(`Stripe will post the refund(s) in 5–10 business days. Reply if anything looks wrong.`);
+    lines.push('');
+  }
   lines.push(`Total Paid: $${amountPaid}`);
-  lines.push(`Class Time: 4 hours (110 min · 20 min break · 110 min)`);
-  lines.push('');
-  lines.push('WHAT TO BRING:');
-  lines.push('- A laptop or tablet (charged)');
-  lines.push('- Pencil, paper, and a calculator');
-  lines.push('- Yourself, ready to work');
-  lines.push('');
-  lines.push(`Need to cancel or reschedule? ${cancelUrl}`);
-  lines.push('Full refund 72+ hrs out · 50% refund 48-72 hrs out · locked under 48 hrs.');
-  lines.push('');
+  if (cart.length > 0) {
+    lines.push(`Class Time: 4 hours (110 min · 20 min break · 110 min)`);
+    lines.push('');
+    lines.push('WHAT TO BRING:');
+    lines.push('- A laptop or tablet (charged)');
+    lines.push('- Pencil, paper, and a calculator');
+    lines.push('- Yourself, ready to work');
+    lines.push('');
+    lines.push(`Need to cancel or reschedule? ${cancelUrl}`);
+    lines.push('Full refund 72+ hrs out · 50% refund 48-72 hrs out · locked under 48 hrs.');
+    lines.push('');
+  }
   lines.push('Jonathan Desta — Math (UChicago \'30)');
   lines.push('jdjonathandesta@gmail.com · (678) 558-0650');
   lines.push('');
