@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Student Onboarding — DNA1575</title>
+<meta name="description" content="Complete this form to help DNA1575 tailor your SAT prep." />
+<meta name="theme-color" content="#1a2845" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a2845;
+    --navy-deep: #0f1a30;
+    --crimson: #a81e2c;
+    --crimson-bright: #c52333;
+    --cream: #f7f4ee;
+    --paper: #fbfaf6;
+    --ink: #14182a;
+    --muted: #6b6e7a;
+    --rule: #d9d4c7;
+    --gold: #c8a96a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Manrope', -apple-system, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(251, 250, 246, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav-inner {
+    max-width: 1280px; margin: 0 auto;
+    padding: 18px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 22px;
+    color: var(--navy); letter-spacing: -0.01em; text-decoration: none;
+  }
+  .brand-mark { width: 28px; height: 28px; display: inline-block; }
+  .brand .accent { color: var(--crimson); }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-links a {
+    color: var(--ink); text-decoration: none;
+    font-size: 14px; font-weight: 500; letter-spacing: 0.01em; transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--crimson); }
+  .nav-cta {
+    background: var(--navy); color: var(--paper) !important;
+    padding: 10px 18px; border-radius: 4px; transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--crimson); }
+  @media (max-width: 760px) {
+    .nav-links a:not(.nav-cta) { display: none; }
+    .nav-inner { padding: 14px 20px; }
+  }
+
+  /* HERO */
+  .onboard-hero {
+    background: var(--navy); color: var(--cream);
+    padding: 64px 32px 56px; position: relative; overflow: hidden;
+  }
+  .onboard-hero::before {
+    content: ''; position: absolute; inset: -50% -25%;
+    background: radial-gradient(circle at 70% 50%, rgba(168,30,44,0.25), transparent 50%);
+    pointer-events: none;
+  }
+  .onboard-hero-inner { max-width: 820px; margin: 0 auto; position: relative; z-index: 1; }
+  .onboard-eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+  }
+  .onboard-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--gold); }
+  .onboard-hero h1 {
+    font-family: 'Fraunces', serif; font-size: clamp(36px, 5vw, 60px);
+    font-weight: 400; color: var(--cream); margin-bottom: 16px;
+    letter-spacing: -0.02em; line-height: 1.05;
+  }
+  .onboard-hero p { font-size: 17px; color: rgba(247,244,238,0.75); max-width: 560px; line-height: 1.6; }
+  .estimate {
+    display: inline-block; margin-top: 20px;
+    background: rgba(247,244,238,0.1); border: 1px solid rgba(247,244,238,0.2);
+    border-radius: 20px; padding: 6px 16px;
+    font-size: 13px; font-weight: 600; color: var(--gold);
+  }
+
+  /* PROGRESS STRIP */
+  .progress-strip {
+    background: var(--cream); border-bottom: 1px solid var(--rule);
+    padding: 0 32px; position: sticky; top: 63px; z-index: 40;
+  }
+  .progress-inner {
+    max-width: 820px; margin: 0 auto;
+    display: flex; gap: 0; overflow-x: auto;
+    scrollbar-width: none; -ms-overflow-style: none;
+  }
+  .progress-inner::-webkit-scrollbar { display: none; }
+  .progress-item {
+    flex-shrink: 0; padding: 14px 16px;
+    font-size: 12px; font-weight: 600; color: var(--muted);
+    letter-spacing: 0.04em; border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s; white-space: nowrap;
+  }
+  .progress-item.active { color: var(--navy); border-bottom-color: var(--crimson); }
+
+  /* FORM WRAPPER */
+  .form-wrapper { max-width: 820px; margin: 0 auto; padding: 64px 32px 96px; }
+  @media (max-width: 600px) { .form-wrapper { padding: 40px 20px 64px; } }
+
+  /* SECTIONS */
+  .form-section { margin-bottom: 72px; padding-bottom: 72px; border-bottom: 1px solid var(--rule); }
+  .form-section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .sec-eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--crimson); margin-bottom: 8px; display: flex; align-items: center; gap: 10px;
+  }
+  .sec-eyebrow .sec-num {
+    font-family: 'Fraunces', serif; font-style: italic; font-weight: 400;
+    font-size: 18px; color: var(--navy); letter-spacing: 0; text-transform: none;
+  }
+  .sec-title {
+    font-family: 'Fraunces', serif; font-size: clamp(24px, 3.5vw, 36px);
+    font-weight: 400; color: var(--navy); margin-bottom: 8px; letter-spacing: -0.02em;
+  }
+  .sec-note { font-size: 14px; color: var(--muted); margin-bottom: 32px; line-height: 1.6; font-style: italic; }
+  .form-fields { display: flex; flex-direction: column; gap: 24px; }
+
+  /* FIELDS */
+  .field-label {
+    display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px;
+  }
+  .q-num {
+    font-family: 'Fraunces', serif; font-size: 13px; font-style: italic;
+    color: var(--crimson); font-weight: 400; flex-shrink: 0; min-width: 22px;
+  }
+  .field-label label { font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.4; }
+  .field-label .opt { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 4px; font-style: italic; }
+  .req { color: var(--crimson); }
+
+  input[type="text"], input[type="email"], input[type="tel"], input[type="date"],
+  select, textarea {
+    width: 100%; padding: 12px 14px;
+    border: 1px solid var(--rule); border-radius: 4px;
+    font-family: 'Manrope', inherit; font-size: 15px;
+    color: var(--ink); background: var(--paper);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: none; -webkit-appearance: none;
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6e7a' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+    padding-right: 36px; cursor: pointer;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--navy);
+    box-shadow: 0 0 0 3px rgba(26,40,69,0.1);
+  }
+  textarea { resize: vertical; min-height: 96px; line-height: 1.6; }
+  .field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 540px) { .field-pair { grid-template-columns: 1fr; } }
+
+  /* OPTION PILLS */
+  .option-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .option-pill {
+    display: inline-flex; align-items: center;
+    padding: 9px 16px; border: 1px solid var(--rule); border-radius: 4px;
+    cursor: pointer; font-size: 14px; font-weight: 500; color: var(--ink);
+    transition: all 0.15s; background: var(--paper); user-select: none; line-height: 1;
+  }
+  .option-pill:hover { border-color: var(--navy); background: var(--cream); }
+  .option-pill input {
+    position: absolute; width: 1px; height: 1px;
+    opacity: 0; overflow: hidden; clip: rect(0,0,0,0);
+  }
+  .option-pill.checked { background: var(--navy); color: var(--paper); border-color: var(--navy); }
+
+  /* SCALE */
+  .scale-wrapper { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .scale-end { font-size: 12px; color: var(--muted); max-width: 80px; line-height: 1.3; font-style: italic; }
+  .scale-end.right { text-align: right; }
+  .scale-btns { display: flex; gap: 8px; flex: 1; justify-content: center; }
+  .scale-btn {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 1px solid var(--rule); background: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', serif; font-size: 20px; color: var(--navy);
+    cursor: pointer; transition: all 0.15s; user-select: none; position: relative;
+  }
+  .scale-btn:hover { border-color: var(--navy); background: var(--cream); }
+  .scale-btn.checked { background: var(--navy); color: var(--paper); border-color: var(--navy); }
+  .scale-btn input {
+    position: absolute; width: 1px; height: 1px;
+    opacity: 0; overflow: hidden; clip: rect(0,0,0,0);
+  }
+  @media (max-width: 480px) {
+    .scale-btn { width: 40px; height: 40px; font-size: 16px; }
+    .scale-end { max-width: 60px; font-size: 11px; }
+  }
+
+  /* CONDITIONAL BLOCK */
+  .cond-block {
+    display: none; padding: 20px 24px;
+    background: var(--cream); border-left: 3px solid var(--crimson);
+    border-radius: 0 4px 4px 0; margin-top: -8px;
+  }
+  .cond-block.visible { display: block; }
+  .cond-block .form-fields { gap: 16px; }
+
+  /* SUBMIT */
+  .submit-area { padding-top: 48px; border-top: 1px solid var(--rule); margin-top: 48px; }
+  .submit-note { font-size: 14px; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+  .submit-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--navy); color: var(--paper); border: none; border-radius: 4px;
+    padding: 16px 36px; font-family: inherit; font-size: 16px; font-weight: 600;
+    cursor: pointer; transition: background 0.2s, transform 0.1s; letter-spacing: 0.01em;
+  }
+  .submit-btn:hover { background: var(--crimson); transform: translateY(-1px); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .submit-btn .spinner {
+    display: none; width: 16px; height: 16px;
+    border: 2px solid rgba(247,244,238,0.3); border-top-color: var(--paper);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  .submit-btn.loading .spinner { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .form-err {
+    display: none; margin-top: 12px; padding: 12px 16px;
+    background: rgba(168,30,44,0.08); border: 1px solid rgba(168,30,44,0.2);
+    border-radius: 4px; color: var(--crimson); font-size: 14px;
+  }
+  .form-err.visible { display: block; }
+
+  /* SUCCESS */
+  .success-overlay { display: none; text-align: center; padding: 80px 32px; }
+  .success-overlay.visible { display: block; }
+  .success-icon-big {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--cream); color: var(--crimson);
+    margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; font-size: 40px;
+  }
+  .success-overlay h2 {
+    font-family: 'Fraunces', serif; font-size: 40px; font-weight: 400;
+    color: var(--navy); margin-bottom: 16px; letter-spacing: -0.02em;
+  }
+  .success-overlay p { font-size: 17px; color: var(--muted); max-width: 480px; margin: 0 auto 32px; line-height: 1.6; }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 28px; border-radius: 4px; font-weight: 600; font-size: 15px;
+    text-decoration: none; background: var(--navy); color: var(--paper); transition: background 0.2s;
+  }
+  .back-btn:hover { background: var(--crimson); }
+
+  /* FOOTER */
+  footer { background: var(--navy-deep); color: rgba(247,244,238,0.6); padding: 48px 32px 32px; }
+  .footer-inner {
+    max-width: 1280px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 16px; font-size: 13px;
+  }
+  .footer-inner a { color: var(--gold); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="brand">
+      <svg class="brand-mark" viewBox="0 0 40 40" fill="none">
+        <path d="M10 4 Q20 12 10 20 Q0 28 10 36" stroke="#1a2845" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M30 4 Q20 12 30 20 Q40 28 30 36" stroke="#a81e2c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <line x1="12" y1="8" x2="28" y2="8" stroke="#1a2845" stroke-width="1.5"/>
+        <line x1="14" y1="14" x2="26" y2="14" stroke="#a81e2c" stroke-width="1.5"/>
+        <line x1="14" y1="26" x2="26" y2="26" stroke="#1a2845" stroke-width="1.5"/>
+        <line x1="12" y1="32" x2="28" y2="32" stroke="#a81e2c" stroke-width="1.5"/>
+      </svg>
+      DNA<span class="accent">1575</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html#instructors">Instructors</a>
+      <a href="index.html#how">How It Works</a>
+      <a href="index.html#pricing">Pricing</a>
+      <a href="index.html#contact" class="nav-cta">Reserve Seat</a>
+    </div>
+  </div>
+</nav>
+
+<div class="onboard-hero">
+  <div class="onboard-hero-inner">
+    <div class="onboard-eyebrow">Student Onboarding</div>
+    <h1 style="font-family:'Fraunces',serif;font-weight:400;letter-spacing:-0.02em;line-height:1.05;">Welcome to DNA<span style="color:var(--crimson-bright)">1575</span>.</h1>
+    <p>This form helps us tailor your prep so we're not starting from zero on day one. Answer as fully as you can — the more detail, the better we can teach you.</p>
+    <span class="estimate">~5 minutes</span>
+  </div>
+</div>
+
+<div class="progress-strip">
+  <div class="progress-inner">
+    <div class="progress-item active" data-sec="s1">Student Info</div>
+    <div class="progress-item" data-sec="s2">Parent Info</div>
+    <div class="progress-item" data-sec="s3">Academics</div>
+    <div class="progress-item" data-sec="s4">Test History</div>
+    <div class="progress-item" data-sec="s5">Goals</div>
+    <div class="progress-item" data-sec="s6">Learning</div>
+    <div class="progress-item" data-sec="s7">Health &amp; Safety</div>
+    <div class="progress-item" data-sec="s8">Final</div>
+  </div>
+</div>
+
+<div class="form-wrapper">
+  <form id="onboarding-form" novalidate>
+
+    <!-- ===== SECTION 1 ===== -->
+    <div class="form-section" id="s1">
+      <div class="sec-eyebrow"><span class="sec-num">01</span>Student Info</div>
+      <h2 class="sec-title">Let's start with you.</h2>
+      <div class="form-fields">
+
+        <div>
+          <div class="field-label"><span class="q-num">1.</span><label for="q1">Full name <span class="req">*</span></label></div>
+          <input type="text" id="q1" name="full_name" required autocomplete="name" />
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">2.</span><label for="q2">Preferred name / nickname <span class="opt">optional</span></label></div>
+          <input type="text" id="q2" name="preferred_name" />
+        </div>
+
+        <div class="field-pair">
+          <div>
+            <div class="field-label"><span class="q-num">3.</span><label for="q3">Date of birth <span class="req">*</span></label></div>
+            <input type="date" id="q3" name="dob" required />
+          </div>
+          <div>
+            <div class="field-label"><span class="q-num">6.</span><label for="q6">Current grade level <span class="req">*</span></label></div>
+            <select id="q6" name="grade" required>
+              <option value="" disabled selected>Select grade</option>
+              <option value="8">8th</option>
+              <option value="9">9th</option>
+              <option value="10">10th</option>
+              <option value="11">11th</option>
+              <option value="12">12th</option>
+              <option value="gap">Gap year</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-pair">
+          <div>
+            <div class="field-label"><span class="q-num">4.</span><label for="q4">Email <span class="req">*</span></label></div>
+            <input type="email" id="q4" name="email" required autocomplete="email" placeholder="you@example.com" />
+          </div>
+          <div>
+            <div class="field-label"><span class="q-num">5.</span><label for="q5">Phone number <span class="opt">optional</span></label></div>
+            <input type="tel" id="q5" name="phone" autocomplete="tel" placeholder="(555) 555-5555" />
+          </div>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">7.</span><label for="q7">School <span class="opt">optional</span></label></div>
+          <input type="text" id="q7" name="school" placeholder="Your high school or middle school" />
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== SECTION 2 ===== -->
+    <div class="form-section" id="s2">
+      <div class="sec-eyebrow"><span class="sec-num">02</span>Parent / Guardian Info</div>
+      <h2 class="sec-title">Parent or guardian details.</h2>
+      <p class="sec-note">Required if the student is under 18.</p>
+      <div class="form-fields">
+
+        <div>
+          <div class="field-label"><span class="q-num">8.</span><label for="q8">Parent/guardian full name</label></div>
+          <input type="text" id="q8" name="parent_name" />
+        </div>
+
+        <div class="field-pair">
+          <div>
+            <div class="field-label"><span class="q-num">9.</span><label for="q9">Parent/guardian email</label></div>
+            <input type="email" id="q9" name="parent_email" placeholder="parent@example.com" />
+          </div>
+          <div>
+            <div class="field-label"><span class="q-num">10.</span><label for="q10">Parent/guardian phone</label></div>
+            <input type="tel" id="q10" name="parent_phone" placeholder="(555) 555-5555" />
+          </div>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">11.</span><label>Best person to contact for scheduling</label></div>
+          <div class="option-group" id="q11-grp">
+            <label class="option-pill"><input type="radio" name="best_contact" value="student" />Student</label>
+            <label class="option-pill"><input type="radio" name="best_contact" value="parent" />Parent</label>
+            <label class="option-pill"><input type="radio" name="best_contact" value="either" />Either</label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== SECTION 3 ===== -->
+    <div class="form-section" id="s3">
+      <div class="sec-eyebrow"><span class="sec-num">03</span>Academic Background</div>
+      <h2 class="sec-title">How school's going.</h2>
+      <div class="form-fields">
+
+        <div>
+          <div class="field-label"><span class="q-num">12.</span><label for="q12">Current overall GPA <span class="opt">weighted if you know it</span></label></div>
+          <input type="text" id="q12" name="gpa" placeholder="e.g. 3.8 or 4.1 weighted" style="max-width:240px;" />
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">13.</span><label>Most recent English / Language Arts grade</label></div>
+          <div class="option-group" id="q13-grp">
+            <label class="option-pill"><input type="radio" name="ela_grade" value="A" />A</label>
+            <label class="option-pill"><input type="radio" name="ela_grade" value="B" />B</label>
+            <label class="option-pill"><input type="radio" name="ela_grade" value="C" />C</label>
+            <label class="option-pill"><input type="radio" name="ela_grade" value="D" />D</label>
+            <label class="option-pill"><input type="radio" name="ela_grade" value="F" />F</label>
+            <label class="option-pill"><input type="radio" name="ela_grade" value="NA" />N/A</label>
+          </div>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">14.</span><label>Most recent Math grade</label></div>
+          <div class="option-group" id="q14-grp">
+            <label class="option-pill"><input type="radio" name="math_grade" value="A" />A</label>
+            <label class="option-pill"><input type="radio" name="math_grade" value="B" />B</label>
+            <label class="option-pill"><input type="radio" name="math_grade" value="C" />C</label>
+            <label class="option-pill"><input type="radio" name="math_grade" value="D" />D</label>
+            <label class="option-pill"><input type="radio" name="math_grade" value="F" />F</label>
+            <label class="option-pill"><input type="radio" name="math_grade" value="NA" />N/A</label>
+          </div>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">15.</span><label for="q15">Highest math class taken or currently in</label></div>
+          <select id="q15" name="highest_math">
+            <option value="" disabled selected>Select a course</option>
+            <option>Algebra 1</option>
+            <option>Geometry</option>
+            <option>Algebra 2</option>
+            <option>Precalculus</option>
+            <option>Calc AB</option>
+            <option>Calc BC</option>
+            <option>Multivariable / Beyond</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">16.</span><label for="q16">Any honors or AP classes? <span class="opt">list them</span></label></div>
+          <input type="text" id="q16" name="ap_classes" placeholder="e.g. AP English, AP Calc BC, Honors Chemistry — or 'None'" />
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== SECTION 4 ===== -->
+    <div class="form-section" id="s4">
+      <div class="sec-eyebrow"><span class="sec-num">04</span>Test History</div>
+      <h2 class="sec-title">What you've taken so far.</h2>
+      <div class="form-fields">
+
+        <div>
+          <div class="field-label"><span class="q-num">17.</span><label>Have you taken the SAT before?</label></div>
+          <div class="option-group" id="q17-grp">
+            <label class="option-pill"><input type="radio" name="taken_sat" value="yes" />Yes</label>
+            <label class="option-pill"><input type="radio" name="taken_sat" value="no" />No</label>
+          </div>
+        </div>
+
+        <div class="cond-block" id="sat-block">
+          <div class="form-fields">
+            <div>
+              <div class="field-label"><span class="q-num">18.</span><label for="q18">Most recent total SAT score</label></div>
+              <input type="text" id="q18" name="sat_total" placeholder="e.g. 1320" style="max-width:160px;" />
+            </div>
+            <div class="field-pair" style="max-width:400px;">
+              <div>
+                <div class="field-label"><span class="q-num">19.</span><label for="q19">Reading &amp; Writing</label></div>
+                <input type="text" id="q19" name="sat_rw" placeholder="e.g. 660" />
+              </div>
+              <div>
+                <div class="field-label"><span class="q-num">20.</span><label for="q20">Math</label></div>
+                <input type="text" id="q20" name="sat_math_score" placeholder="e.g. 660" />
+              </div>
+            </div>
+            <div>
+              <div class="field-label"><span class="q-num">21.</span><label for="q21">When did you take it?</label></div>
+              <input type="text" id="q21" name="sat_date" placeholder="e.g. March 2025" style="max-width:200px;" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">22.</span><label for="q22">Have you taken the PSAT? <span class="opt">total + section scores if so</span></label></div>
+          <input type="text" id="q22" name="psat_scores" placeholder="e.g. 1180 total, 590 RW / 590 Math — or 'No'" />
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">23.</span><label for="q23">Any official Bluebook practice tests? <span class="opt">most recent score</span></label></div>
+          <input type="text" id="q23" name="bluebook_scores" placeholder="e.g. Practice Test 4 — 1410 (720 RW / 690 Math) — or 'None'" />
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">24.</span><label>Have you taken (or plan to take) the ACT?</label></div>
+          <div class="option-group" id="q24-grp">
+            <label class="option-pill"><input type="radio" name="taken_act" value="yes" />Yes</label>
+            <label class="option-pill"><input type="radio" name="taken_act" value="no" />No</label>
+            <label class="option-pill"><input type="radio" name="taken_act" value="planning" />Planning to</label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== SECTION 5 ===== -->
+    <div class="form-section" id="s5">
+      <div class="sec-eyebrow"><span class="sec-num">05</span>Goals</div>
+      <h2 class="sec-title">What you're aiming for.</h2>
+      <div class="form-fields">
+
+        <div class="field-pair">
+          <div>
+            <div class="field-label"><span class="q-num">25.</span><label for="q25">Target SAT score</label></div>
+            <input type="text" id="q25" name="target_score" placeholder="e.g. 1500" />
+          </div>
+          <div>
+            <div class="field-label"><span class="q-num">26.</span><label for="q26">Target test date</label></div>
+            <input type="text" id="q26" name="target_date" placeholder="e.g. October 2025" />
+          </div>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">27.</span><label>Are you locked into that date or flexible?</label></div>
+          <div class="option-group" id="q27-grp">
+            <label class="option-pill"><input type="radio" name="date_flex" value="locked" />Locked in</label>
+            <label class="option-pill"><input type="radio" name="date_flex" value="flex_1mo" />Flexible by 1 month</label>
+            <label class="option-pill"><input type="radio" name="date_flex" value="open" />Open</label>
+          </div>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">28.</span><label for="q28">Schools you're aiming for <span class="opt">top 3 if you have them</span></label></div>
+          <textarea id="q28" name="target_schools" placeholder="e.g. UGA, Georgia Tech, Emory — or still deciding"></textarea>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">29.</span><label>Which section feels weaker right now?</label></div>
+          <div class="option-group" id="q29-grp">
+            <label class="option-pill"><input type="radio" name="weaker_section" value="rw" />Reading &amp; Writing</label>
+            <label class="option-pill"><input type="radio" name="weaker_section" value="math" />Math</label>
+            <label class="option-pill"><input type="radio" name="weaker_section" value="equal" />About equal</label>
+            <label class="option-pill"><input type="radio" name="weaker_section" value="unsure" />Not sure yet</label>
+          </div>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">30.</span><label for="q30">What's the #1 thing you want out of this prep?</label></div>
+          <textarea id="q30" name="primary_goal" placeholder="Be as specific as you want — a score range, a deadline, a skill, a feeling going into test day"></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== SECTION 6 ===== -->
+    <div class="form-section" id="s6">
+      <div class="sec-eyebrow"><span class="sec-num">06</span>Learning Background</div>
+      <h2 class="sec-title">How you learn best.</h2>
+      <div class="form-fields">
+
+        <div>
+          <div class="field-label"><span class="q-num">31.</span><label for="q31">Have you done SAT prep before? <span class="opt">tutoring, class, self-study, Khan Academy, etc.</span></label></div>
+          <textarea id="q31" name="prior_prep" placeholder="Describe what you've done — or write 'No' if this is your first time"></textarea>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">32.</span><label for="q32">What worked and what didn't?</label></div>
+          <textarea id="q32" name="what_worked" placeholder="Honest answer is most useful here — even 'I don't know yet' is fine"></textarea>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">33.</span><label>How do you learn best? <span class="opt">select all that apply</span></label></div>
+          <div class="option-group" id="q33-grp">
+            <label class="option-pill"><input type="checkbox" name="learning_style" value="examples" />Working through examples</label>
+            <label class="option-pill"><input type="checkbox" name="learning_style" value="watching" />Watching explanations</label>
+            <label class="option-pill"><input type="checkbox" name="learning_style" value="drilling" />Drilling problems</label>
+            <label class="option-pill"><input type="checkbox" name="learning_style" value="reading" />Reading / notes</label>
+            <label class="option-pill"><input type="checkbox" name="learning_style" value="discussion" />One-on-one discussion</label>
+            <label class="option-pill"><input type="checkbox" name="learning_style" value="unsure" />Not sure</label>
+          </div>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">34.</span><label>On a scale of 1–5, how comfortable are you with Desmos (the digital SAT calculator)?</label></div>
+          <div class="scale-wrapper">
+            <span class="scale-end">Never used it</span>
+            <div class="scale-btns" id="q34-grp">
+              <label class="scale-btn"><input type="radio" name="desmos_comfort" value="1" />1</label>
+              <label class="scale-btn"><input type="radio" name="desmos_comfort" value="2" />2</label>
+              <label class="scale-btn"><input type="radio" name="desmos_comfort" value="3" />3</label>
+              <label class="scale-btn"><input type="radio" name="desmos_comfort" value="4" />4</label>
+              <label class="scale-btn"><input type="radio" name="desmos_comfort" value="5" />5</label>
+            </div>
+            <span class="scale-end right">Use it all the time</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">35.</span><label for="q35">Anything specific you already know trips you up? <span class="opt">optional</span></label></div>
+          <textarea id="q35" name="known_weaknesses" placeholder="e.g. geometry, vocab in context, time pressure, word problems"></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== SECTION 7 ===== -->
+    <div class="form-section" id="s7">
+      <div class="sec-eyebrow"><span class="sec-num">07</span>Health &amp; Safety</div>
+      <h2 class="sec-title">A few important questions.</h2>
+      <p class="sec-note">All fields in this section are optional to share. We ask because it genuinely helps us teach better and keep sessions safe — not to profile anyone.</p>
+      <div class="form-fields">
+
+        <div>
+          <div class="field-label"><span class="q-num">36.</span><label for="q40">Food allergies or dietary restrictions <span class="opt">write "none" if N/A</span></label></div>
+          <textarea id="q40" name="food_allergies" placeholder="e.g. nut allergy, gluten intolerance — or 'none'" style="min-height:72px;"></textarea>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">37.</span><label for="q41">Any other allergies or medical conditions relevant for sessions <span class="opt">optional</span></label></div>
+          <textarea id="q41" name="medical_notes" placeholder="e.g. severe nut allergy (EpiPen carrier), asthma, etc." style="min-height:72px;"></textarea>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">38.</span><label>Do you have official testing accommodations from College Board? <span class="opt">extended time, breaks, etc.</span></label></div>
+          <div class="option-group" id="q42-grp">
+            <label class="option-pill"><input type="radio" name="accommodations" value="yes" />Yes</label>
+            <label class="option-pill"><input type="radio" name="accommodations" value="no" />No</label>
+            <label class="option-pill"><input type="radio" name="accommodations" value="pending" />Pending</label>
+          </div>
+        </div>
+
+        <div class="cond-block" id="accom-block">
+          <div class="form-fields">
+            <div>
+              <div class="field-label"><span class="q-num">39.</span><label for="q43">Please describe your accommodations</label></div>
+              <textarea id="q43" name="accommodation_details" placeholder="e.g. 50% extended time (1.5×), extended breaks between modules"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">40.</span><label for="q44">Anything about how you learn — diagnosed or not — that would help us teach you better? <span class="opt">optional</span></label></div>
+          <textarea id="q44" name="learning_differences" placeholder="ADHD, dyslexia, test anxiety, processing speed, anything else — share what feels relevant"></textarea>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">41.</span><label for="q45">Emergency contact name &amp; phone <span class="opt">if different from parent above</span></label></div>
+          <input type="text" id="q45" name="emergency_contact" placeholder="e.g. Jane Smith — (404) 555-1234" />
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== SECTION 8 ===== -->
+    <div class="form-section" id="s8">
+      <div class="sec-eyebrow"><span class="sec-num">08</span>Final</div>
+      <h2 class="sec-title">Almost done.</h2>
+      <div class="form-fields">
+
+        <div>
+          <div class="field-label"><span class="q-num">42.</span><label for="q46">How did you hear about DNA1575?</label></div>
+          <select id="q46" name="referral_source">
+            <option value="" disabled selected>Select one</option>
+            <option value="friend">Friend / word of mouth</option>
+            <option value="instagram">Instagram</option>
+            <option value="search">Search (Google, etc.)</option>
+            <option value="school">School</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div>
+          <div class="field-label"><span class="q-num">43.</span><label for="q47">Anything else you want us to know before we start? <span class="opt">optional</span></label></div>
+          <textarea id="q47" name="additional_notes" placeholder="Open space — goals, context, concerns, questions, whatever"></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="submit-area">
+      <p class="submit-note">Your answers go directly to Jonathan and Alex. We'll reach out before your first session to confirm details and answer any questions.</p>
+      <button type="submit" class="submit-btn" id="submit-btn">
+        <span class="spinner"></span>
+        <span class="btn-label">Submit Onboarding Form</span>
+      </button>
+      <div class="form-err" id="form-err">Please fill in all required fields (name, date of birth, email, and grade level).</div>
+    </div>
+
+  </form>
+
+  <!-- SUCCESS -->
+  <div class="success-overlay" id="success-overlay">
+    <div class="success-icon-big">✓</div>
+    <h2 style="font-family:'Fraunces',serif;font-weight:400;letter-spacing:-0.02em;">You're all set.</h2>
+    <p>Thanks, <strong id="success-name">there</strong>. Jonathan and Alex have your info and will be in touch before your first session.</p>
+    <a href="index.html" class="back-btn">Back to DNA1575 →</a>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div>© 2026 DNA1575 · SAT Prep Specialists · Atlanta, GA</div>
+    <div>Built by <a href="index.html">Desta &amp; Alexandrov</a></div>
+  </div>
+</footer>
+
+<script>
+  // ===== Radio pill groups =====
+  function setupRadio(groupId) {
+    const grp = document.getElementById(groupId);
+    if (!grp) return;
+    grp.querySelectorAll('input[type="radio"]').forEach(input => {
+      input.addEventListener('change', () => {
+        grp.querySelectorAll('.option-pill').forEach(p => {
+          p.classList.toggle('checked', p.querySelector('input').checked);
+        });
+      });
+    });
+  }
+
+  // ===== Checkbox pill groups =====
+  function setupCheckbox(groupId) {
+    const grp = document.getElementById(groupId);
+    if (!grp) return;
+    grp.querySelectorAll('input[type="checkbox"]').forEach(input => {
+      input.addEventListener('change', () => {
+        input.closest('.option-pill').classList.toggle('checked', input.checked);
+      });
+    });
+  }
+
+  // ===== Scale (Desmos) =====
+  function setupScale(groupId) {
+    const grp = document.getElementById(groupId);
+    if (!grp) return;
+    grp.querySelectorAll('input[type="radio"]').forEach(input => {
+      input.addEventListener('change', () => {
+        grp.querySelectorAll('.scale-btn').forEach(btn => {
+          btn.classList.toggle('checked', btn.querySelector('input').checked);
+        });
+      });
+    });
+  }
+
+  ['q11-grp','q13-grp','q14-grp','q17-grp','q24-grp','q27-grp','q29-grp','q42-grp'].forEach(setupRadio);
+  ['q33-grp'].forEach(setupCheckbox);
+  setupScale('q34-grp');
+
+  // ===== Conditional: SAT scores =====
+  document.querySelectorAll('input[name="taken_sat"]').forEach(r => {
+    r.addEventListener('change', () => {
+      document.getElementById('sat-block').classList.toggle('visible', r.value === 'yes' && r.checked);
+    });
+  });
+
+  // ===== Conditional: Accommodation detail =====
+  document.querySelectorAll('input[name="accommodations"]').forEach(r => {
+    r.addEventListener('change', () => {
+      document.getElementById('accom-block').classList.toggle('visible', r.value === 'yes' && r.checked);
+    });
+  });
+
+  // ===== Progress strip scroll spy =====
+  const sections = document.querySelectorAll('.form-section[id]');
+  const progressItems = document.querySelectorAll('.progress-item[data-sec]');
+  const spy = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        progressItems.forEach(p => p.classList.remove('active'));
+        const match = document.querySelector(`.progress-item[data-sec="${entry.target.id}"]`);
+        if (match) {
+          match.classList.add('active');
+          match.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => spy.observe(s));
+
+  // ===== Form submission =====
+  document.getElementById('onboarding-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const errEl = document.getElementById('form-err');
+    errEl.classList.remove('visible');
+
+    const name  = document.getElementById('q1').value.trim();
+    const email = document.getElementById('q4').value.trim();
+    const dob   = document.getElementById('q3').value;
+    const grade = document.getElementById('q6').value;
+
+    if (!name || !dob || !grade || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errEl.classList.add('visible');
+      document.getElementById('s1').scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.classList.add('loading');
+
+    // Collect form data, merging repeated checkbox names into arrays
+    const fd = new FormData(e.target);
+    const data = {};
+    fd.forEach((val, key) => {
+      if (key in data) {
+        if (!Array.isArray(data[key])) data[key] = [data[key]];
+        data[key].push(val);
+      } else {
+        data[key] = val;
+      }
+    });
+
+    try {
+      await fetch('https://formspree.io/f/xaqkekgr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(data),
+      });
+    } catch {
+      // still show success
+    }
+
+    document.getElementById('success-name').textContent = name.split(' ')[0];
+    document.getElementById('onboarding-form').style.display = 'none';
+    document.getElementById('success-overlay').classList.add('visible');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+</script>
+</body>
+</html>

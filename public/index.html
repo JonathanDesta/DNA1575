@@ -1,0 +1,2635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DNA1575 — SAT Prep Specialists</title>
+<meta name="description" content="Small-group SAT prep taught by an incoming UChicago freshman and an incoming Caltech freshman who scored 1570 and 1580. Atlanta in-person and Zoom classes." />
+<meta name="theme-color" content="#1a2845" />
+
+<!-- Favicons -->
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png" />
+
+<!-- Open Graph (Facebook, iMessage, Discord, LinkedIn) -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="DNA1575" />
+<meta property="og:title" content="DNA1575 — SAT Prep Specialists" />
+<meta property="og:description" content="Small-group SAT prep taught by a UChicago and a Caltech freshman who scored 1570 and 1580. Atlanta in-person and Zoom." />
+<meta property="og:image" content="assets/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="DNA1575 — SAT Prep Specialists" />
+<meta name="twitter:description" content="Small-group SAT prep taught by a UChicago and a Caltech freshman who scored 1570 and 1580." />
+<meta name="twitter:image" content="assets/og-image.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://js.stripe.com/v3/"></script>
+
+<style>
+  :root {
+    --navy: #1a2845;
+    --navy-deep: #0f1a30;
+    --crimson: #a81e2c;
+    --crimson-bright: #c52333;
+    --cream: #f7f4ee;
+    --paper: #fbfaf6;
+    --ink: #14182a;
+    --muted: #6b6e7a;
+    --rule: #d9d4c7;
+    --gold: #c8a96a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Manrope', -apple-system, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  .display { font-family: 'Fraunces', Georgia, serif; font-weight: 500; letter-spacing: -0.02em; line-height: 1.05; }
+  .mono { font-family: 'Manrope', monospace; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+
+  /* ====== NAV ====== */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(251, 250, 246, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 22px;
+    color: var(--navy);
+    letter-spacing: -0.01em;
+    text-decoration: none;
+  }
+  .brand-mark {
+    width: 28px; height: 28px;
+    display: inline-block;
+  }
+  .brand .accent { color: var(--crimson); }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-links a {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--crimson); }
+  .nav-cta {
+    background: var(--navy);
+    color: var(--paper) !important;
+    padding: 10px 18px;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--crimson); }
+
+  @media (max-width: 760px) {
+    .nav-links a:not(.nav-cta) { display: none; }
+    .nav-inner { padding: 14px 20px; }
+  }
+
+  /* ====== HERO ====== */
+  .hero {
+    position: relative;
+    padding: 80px 32px 100px;
+    max-width: 1280px;
+    margin: 0 auto;
+    overflow: hidden;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--crimson);
+    margin-bottom: 28px;
+  }
+  .hero-eyebrow::before {
+    content: ''; width: 32px; height: 1px; background: var(--crimson);
+  }
+  h1.hero-title {
+    font-size: clamp(48px, 7vw, 92px);
+    font-weight: 400;
+    color: var(--navy);
+    margin-bottom: 28px;
+  }
+  h1.hero-title em {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--crimson);
+  }
+  .hero-sub {
+    font-size: 19px;
+    color: var(--muted);
+    max-width: 520px;
+    margin-bottom: 40px;
+    line-height: 1.6;
+  }
+  .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 28px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--navy); color: var(--paper); }
+  .btn-primary:hover { background: var(--crimson); transform: translateY(-1px); }
+  .btn-secondary { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
+  .btn-secondary:hover { background: var(--navy); color: var(--paper); }
+
+  /* Hero side stats panel */
+  .hero-panel {
+    position: relative;
+    background: var(--navy);
+    color: var(--paper);
+    padding: 48px 40px;
+    border-radius: 4px;
+    box-shadow: 0 30px 80px -20px rgba(15, 26, 48, 0.35);
+  }
+  .hero-panel::before {
+    content: '';
+    position: absolute;
+    inset: 12px;
+    border: 1px solid rgba(247, 244, 238, 0.15);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+  .panel-label {
+    font-family: 'Manrope', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 24px;
+  }
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 18px 0;
+    border-bottom: 1px solid rgba(247, 244, 238, 0.1);
+  }
+  .stat-row:last-child { border: none; padding-bottom: 0; }
+  .stat-row:first-of-type { padding-top: 0; }
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 44px;
+    color: var(--paper);
+    letter-spacing: -0.02em;
+  }
+  .stat-label {
+    font-size: 13px;
+    color: rgba(247, 244, 238, 0.7);
+    text-align: right;
+    max-width: 160px;
+  }
+
+  @media (max-width: 900px) {
+    .hero { padding: 48px 20px 60px; }
+    .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+    .hero-panel { padding: 32px 24px; }
+    .stat-num { font-size: 36px; }
+  }
+
+  /* ====== STRIP ====== */
+  .marquee-strip {
+    background: var(--navy);
+    color: var(--cream);
+    padding: 18px 0;
+    overflow: hidden;
+    border-top: 1px solid rgba(247, 244, 238, 0.1);
+    border-bottom: 1px solid rgba(247, 244, 238, 0.1);
+  }
+  .marquee-track {
+    display: flex;
+    gap: 64px;
+    animation: scroll 30s linear infinite;
+    white-space: nowrap;
+    width: max-content;
+  }
+  .marquee-track span {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 17px;
+    font-weight: 400;
+  }
+  .marquee-track .dot {
+    color: var(--crimson-bright);
+    font-style: normal;
+  }
+  @keyframes scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ====== SECTION ====== */
+  section { padding: 96px 32px; max-width: 1280px; margin: 0 auto; }
+  .section-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--crimson);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-eyebrow .num {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 18px;
+    color: var(--navy);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  h2.section-title {
+    font-size: clamp(36px, 4.5vw, 60px);
+    font-weight: 400;
+    color: var(--navy);
+    margin-bottom: 24px;
+    max-width: 720px;
+  }
+  h2.section-title em { font-style: italic; color: var(--crimson); font-weight: 300; }
+  .section-sub {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 620px;
+    margin-bottom: 60px;
+    line-height: 1.6;
+  }
+
+  /* ====== INSTRUCTORS ====== */
+  .instructors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+  }
+  .instructor {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .instructor:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 60px -20px rgba(15, 26, 48, 0.2);
+  }
+  .instructor-photo {
+    aspect-ratio: 1;
+    overflow: hidden;
+    position: relative;
+    background: var(--navy);
+  }
+  .instructor-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    transition: transform 0.6s ease;
+  }
+  .instructor:hover .instructor-photo img { transform: scale(1.04); }
+  .instructor-photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(15, 26, 48, 0.4));
+    pointer-events: none;
+  }
+  .score-badge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: var(--crimson);
+    color: var(--paper);
+    padding: 8px 14px;
+    border-radius: 2px;
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    z-index: 2;
+    box-shadow: 0 8px 24px -8px rgba(168, 30, 44, 0.6);
+  }
+  .score-badge .small {
+    font-family: 'Manrope', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: -2px;
+    font-weight: 600;
+  }
+  .instructor-body { padding: 32px; }
+  .instructor-name {
+    font-family: 'Fraunces', serif;
+    font-size: 30px;
+    font-weight: 500;
+    color: var(--navy);
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+  .instructor-school {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--crimson);
+    font-size: 17px;
+    margin-bottom: 20px;
+  }
+  .instructor-detail {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 14px;
+  }
+  .instructor-detail:last-child { border: none; }
+  .instructor-detail .label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; font-weight: 600; }
+  .instructor-detail .value { color: var(--navy); font-weight: 600; }
+
+  /* Verified score strip */
+  .score-strip {
+    margin-top: 24px;
+    padding: 14px 16px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    position: relative;
+  }
+  .score-strip .verified-tag {
+    position: absolute;
+    top: -9px;
+    left: 14px;
+    background: var(--paper);
+    padding: 0 10px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    font-weight: 700;
+    color: var(--crimson);
+    text-transform: uppercase;
+  }
+  .score-strip img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .score-strip .placeholder {
+    text-align: center;
+    padding: 20px 12px;
+    color: var(--muted);
+    font-size: 13px;
+    font-style: italic;
+    font-family: 'Fraunces', serif;
+  }
+
+  @media (max-width: 760px) {
+    section { padding: 64px 20px; }
+    .instructors { grid-template-columns: 1fr; gap: 24px; }
+    .instructor-body { padding: 24px; }
+  }
+
+  /* ====== HOW IT WORKS ====== */
+  .how-section {
+    background: var(--navy);
+    color: var(--cream);
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+  .how-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 96px 32px;
+  }
+  .how-section .section-eyebrow { color: var(--gold); }
+  .how-section .section-eyebrow .num { color: var(--cream); }
+  .how-section h2.section-title { color: var(--cream); }
+  .how-section h2.section-title em { color: var(--gold); }
+  .how-section .section-sub { color: rgba(247, 244, 238, 0.7); }
+
+  .schedule-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: rgba(247, 244, 238, 0.15);
+    margin-bottom: 64px;
+    border: 1px solid rgba(247, 244, 238, 0.15);
+  }
+  .sched-cell {
+    background: var(--navy);
+    padding: 32px;
+  }
+  .sched-mode {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+  .sched-days {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 400;
+    color: var(--cream);
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+  }
+  .sched-meta {
+    color: rgba(247, 244, 238, 0.7);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .timeline {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    position: relative;
+    padding-top: 24px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    top: 36px;
+    left: 5%;
+    right: 5%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(247, 244, 238, 0.3), transparent);
+  }
+  .step {
+    position: relative;
+    padding-top: 36px;
+  }
+  .step::before {
+    content: '';
+    position: absolute;
+    top: 30px;
+    left: 0;
+    width: 14px; height: 14px;
+    background: var(--crimson);
+    border-radius: 50%;
+    border: 3px solid var(--navy);
+    box-shadow: 0 0 0 1px rgba(247, 244, 238, 0.3);
+  }
+  .step-time {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--gold);
+    margin-bottom: 4px;
+    margin-top: 24px;
+  }
+  .step-name {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    color: var(--cream);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .step-desc {
+    color: rgba(247, 244, 238, 0.65);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 900px) {
+    .schedule-grid { grid-template-columns: 1fr; }
+    .timeline { grid-template-columns: 1fr 1fr; gap: 24px; }
+    .timeline::before { display: none; }
+  }
+  @media (max-width: 540px) {
+    .timeline { grid-template-columns: 1fr; }
+    .sched-days { font-size: 24px; }
+  }
+
+  /* ====== PRICING ====== */
+  .pricing-tabs {
+    display: inline-flex;
+    background: var(--cream);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 4px;
+    margin-bottom: 48px;
+    gap: 4px;
+  }
+  .pricing-tab {
+    padding: 10px 24px;
+    border-radius: 2px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .pricing-tab.active {
+    background: var(--navy);
+    color: var(--paper);
+  }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  .price-card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 36px 32px;
+    border-radius: 4px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s;
+  }
+  .price-card.featured {
+    background: var(--navy);
+    color: var(--cream);
+    border-color: var(--navy);
+  }
+  .price-card.featured::before {
+    content: 'BEST VALUE';
+    position: absolute;
+    top: -10px; right: 24px;
+    background: var(--crimson);
+    color: var(--paper);
+    padding: 4px 12px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    font-weight: 700;
+    border-radius: 2px;
+  }
+  .price-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .price-mode {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--crimson);
+  }
+  .price-card.featured .price-mode { color: var(--gold); }
+  .price-size {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--muted);
+  }
+  .price-card.featured .price-size { color: rgba(247, 244, 238, 0.7); }
+  .price-name {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+  .price-amount {
+    font-family: 'Fraunces', serif;
+    font-size: 56px;
+    font-weight: 400;
+    color: var(--navy);
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+  }
+  .price-card.featured .price-amount { color: var(--cream); }
+  .price-amount .dollar {
+    font-size: 26px;
+    vertical-align: super;
+    font-weight: 400;
+  }
+  .price-tag {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+  .price-card.featured .price-tag { color: rgba(247, 244, 238, 0.65); }
+  .price-features {
+    list-style: none;
+    margin-bottom: 32px;
+    flex-grow: 1;
+  }
+  .price-features li {
+    padding: 8px 0;
+    font-size: 14px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .price-features li::before {
+    content: '→';
+    color: var(--crimson);
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .price-card.featured .price-features li::before { color: var(--gold); }
+  .price-btn {
+    display: block;
+    text-align: center;
+    padding: 14px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s;
+    background: var(--navy);
+    color: var(--paper);
+  }
+  .price-card.featured .price-btn { background: var(--crimson); }
+  .price-btn:hover { background: var(--crimson); }
+  .price-card.featured .price-btn:hover { background: var(--paper); color: var(--navy); }
+
+  .pricing-note {
+    margin-top: 32px;
+    padding: 20px 24px;
+    background: var(--cream);
+    border-left: 3px solid var(--crimson);
+    border-radius: 2px;
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .pricing-note strong { color: var(--crimson); }
+
+  /* Discount ribbon — sits above the pricing tabs */
+  .discount-ribbon {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 22px;
+    background: var(--navy);
+    color: var(--cream);
+    border-radius: 4px;
+    margin-bottom: 32px;
+    box-shadow: 0 14px 30px -16px rgba(15, 26, 48, 0.4);
+  }
+  .discount-ribbon .left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .discount-ribbon .badge {
+    background: var(--crimson);
+    color: var(--paper);
+    padding: 5px 12px;
+    border-radius: 2px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    flex-shrink: 0;
+  }
+  .discount-ribbon .text {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+  .discount-ribbon .text strong { font-weight: 700; }
+  .discount-ribbon .right {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--gold);
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .discount-ribbon .right a {
+    color: var(--gold);
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .discount-ribbon .right a:hover { opacity: 0.8; }
+  @media (max-width: 640px) {
+    .discount-ribbon { flex-direction: column; align-items: flex-start; padding: 14px 16px; }
+    .discount-ribbon .text { font-size: 13px; }
+  }
+
+  @media (max-width: 760px) {
+    .pricing-grid { grid-template-columns: 1fr; }
+    .price-amount { font-size: 44px; }
+    .pricing-tabs { display: flex; width: 100%; }
+    .pricing-tab { flex: 1; padding: 10px 8px; font-size: 12px; }
+  }
+
+  /* ====== LOCATION + INCLUDED ====== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: start;
+  }
+  .info-card {
+    border: 1px solid var(--rule);
+    padding: 36px;
+    border-radius: 4px;
+    background: var(--paper);
+  }
+  .info-card h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--navy);
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+  }
+  .info-card p { color: var(--muted); margin-bottom: 16px; line-height: 1.6; }
+  .included-list { list-style: none; }
+  .included-list li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .included-list li:last-child { border: none; }
+  .included-icon {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--crimson);
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .included-list li span:last-child {
+    color: var(--ink);
+    font-weight: 500;
+    font-size: 15px;
+  }
+  @media (max-width: 760px) {
+    .two-col { grid-template-columns: 1fr; gap: 32px; }
+  }
+
+  /* ====== FAQ ====== */
+  .faq { max-width: 820px; margin: 0 auto; }
+  .faq-item {
+    border-bottom: 1px solid var(--rule);
+  }
+  .faq-q {
+    width: 100%;
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 24px 0;
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--navy);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    letter-spacing: -0.01em;
+  }
+  .faq-q .icon {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--crimson);
+    transition: transform 0.3s;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+  .faq-item.open .icon { transform: rotate(45deg); }
+  .faq-a {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s ease;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .faq-item.open .faq-a {
+    max-height: 400px;
+    padding: 0 0 28px;
+  }
+
+  /* ====== CONTACT ====== */
+  .contact-card {
+    background: var(--navy);
+    color: var(--cream);
+    padding: 64px 48px;
+    border-radius: 4px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .contact-card::before {
+    content: '';
+    position: absolute;
+    inset: -50% -25%;
+    background: radial-gradient(circle at 30% 50%, rgba(168, 30, 44, 0.2), transparent 50%);
+    pointer-events: none;
+  }
+  .contact-card > * { position: relative; z-index: 1; }
+  .contact-card h2 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 400;
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+  }
+  .contact-card h2 em { font-style: italic; color: var(--gold); font-weight: 300; }
+  .contact-card p {
+    color: rgba(247, 244, 238, 0.75);
+    max-width: 540px;
+    margin: 0 auto 40px;
+    font-size: 17px;
+  }
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 720px;
+    margin: 0 auto;
+    text-align: left;
+  }
+  .contact-person {
+    border: 1px solid rgba(247, 244, 238, 0.15);
+    padding: 24px;
+    border-radius: 4px;
+    background: rgba(247, 244, 238, 0.03);
+  }
+  .contact-person h4 {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .contact-person .role {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--gold);
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  .contact-person a {
+    display: block;
+    color: rgba(247, 244, 238, 0.85);
+    text-decoration: none;
+    font-size: 14px;
+    padding: 6px 0;
+    transition: color 0.2s;
+  }
+  .contact-person a:hover { color: var(--gold); }
+
+  @media (max-width: 600px) {
+    .contact-card { padding: 40px 24px; }
+    .contact-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ====== FOOTER ====== */
+  footer {
+    background: var(--navy-deep);
+    color: rgba(247, 244, 238, 0.6);
+    padding: 48px 32px 32px;
+    margin-top: 96px;
+  }
+  .footer-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 13px;
+  }
+  .footer-inner a { color: var(--gold); text-decoration: none; }
+
+  /* ====== HELIX DECOR ====== */
+  .helix-decor {
+    position: absolute;
+    opacity: 0.06;
+    pointer-events: none;
+  }
+
+  /* Reveal anim */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ====== CHECKOUT MODAL ====== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 26, 48, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 100;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 5vh 20px;
+    overflow-y: auto;
+  }
+  .modal-overlay.active {
+    display: flex;
+    animation: fadeIn 0.25s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: var(--paper);
+    border-radius: 6px;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.4);
+    position: relative;
+    margin: auto;
+  }
+  .modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .modal-close:hover { background: var(--cream); }
+  .modal-header {
+    padding: 32px 32px 20px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .modal-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--crimson);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--navy);
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .modal-sub {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .modal-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+  }
+  .modal-summary .total-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .modal-summary .total-amount {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 500;
+    color: var(--navy);
+    letter-spacing: -0.01em;
+  }
+  .modal-body { padding: 24px 32px 28px; }
+  .form-row { margin-bottom: 16px; }
+  .form-row label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+  }
+  .form-row input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--ink);
+    background: var(--paper);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-row input:focus {
+    outline: none;
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px rgba(26, 40, 69, 0.1);
+  }
+  .form-row input.error { border-color: var(--crimson); }
+  .form-row .error-msg {
+    color: var(--crimson);
+    font-size: 12px;
+    margin-top: 4px;
+    display: none;
+  }
+  .form-row .error-msg.visible { display: block; }
+  .form-row-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .form-row-pair .form-row { margin-bottom: 0; }
+  #card-element {
+    padding: 12px 14px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--paper);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  #card-element.StripeElement--focus {
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px rgba(26, 40, 69, 0.1);
+  }
+  #card-element.StripeElement--invalid { border-color: var(--crimson); }
+  #card-errors {
+    color: var(--crimson);
+    font-size: 13px;
+    margin-top: 8px;
+    min-height: 18px;
+  }
+  .pay-btn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--navy);
+    color: var(--paper);
+    border: none;
+    border-radius: 4px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+  .pay-btn:hover:not(:disabled) { background: var(--crimson); }
+  .pay-btn:active:not(:disabled) { transform: translateY(1px); }
+  .pay-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .pay-btn .spinner {
+    display: none;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(247,244,238,0.3);
+    border-top-color: var(--paper);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: -3px;
+    margin-right: 8px;
+  }
+  .pay-btn.loading .spinner { display: inline-block; }
+  .pay-btn.loading .label { opacity: 0.85; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .secure-note {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  /* Success state */
+  .modal.success-state .modal-header,
+  .modal.success-state .modal-body { display: none; }
+  .success-content { display: none; padding: 48px 36px; text-align: center; }
+  .modal.success-state .success-content { display: block; }
+  .success-icon {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--cream);
+    color: var(--crimson);
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+  }
+  .success-title {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 500;
+    color: var(--navy);
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+  .success-msg {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 360px;
+    margin: 0 auto 24px;
+  }
+  .success-msg strong { color: var(--ink); }
+  .success-btn {
+    background: var(--navy);
+    color: var(--paper);
+    padding: 12px 28px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .success-btn:hover { background: var(--crimson); }
+  body.modal-open { overflow: hidden; }
+
+  /* ====== MORE-COMING NOTE ====== */
+  .more-coming-note {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--muted);
+    font-style: italic;
+    font-family: 'Fraunces', serif;
+  }
+  .more-coming-note a {
+    color: var(--crimson);
+    text-decoration: none;
+    border-bottom: 1px solid var(--crimson);
+  }
+
+  /* ====== CART BUTTON (floating, top-right under nav) ====== */
+  .cart-button {
+    position: fixed;
+    top: 76px; right: 24px;
+    z-index: 40;
+    background: var(--navy);
+    color: var(--paper);
+    border: none;
+    border-radius: 999px;
+    padding: 10px 18px 10px 16px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 26px -10px rgba(15, 26, 48, 0.4);
+    display: none;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.15s, background 0.2s;
+  }
+  .cart-button:hover { background: var(--crimson); transform: translateY(-1px); }
+  .cart-button.visible { display: inline-flex; }
+  .cart-button .count {
+    background: var(--crimson);
+    color: var(--paper);
+    border-radius: 999px;
+    min-width: 20px; height: 20px;
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cart-button:hover .count { background: var(--paper); color: var(--crimson); }
+  .cart-button .total {
+    font-variant-numeric: tabular-nums;
+    margin-left: 4px;
+  }
+  @media (max-width: 640px) {
+    .cart-button { top: 70px; right: 16px; padding: 8px 14px 8px 12px; font-size: 12px; }
+  }
+
+  /* ====== DATE PICKER MODAL ====== */
+  .date-picker {
+    display: none;
+    padding: 28px 32px 28px;
+  }
+  .date-picker.active { display: block; }
+  .dp-instruction {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: var(--cream);
+    border-radius: 4px;
+    border-left: 3px solid var(--crimson);
+  }
+  .dp-instruction.complete { border-left-color: #2d8a3e; }
+  .dp-instruction strong { color: var(--ink); }
+  .dp-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .dp-date {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 12px 14px;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .dp-date:hover:not(:disabled):not(.selected) {
+    border-color: var(--navy);
+    background: var(--cream);
+  }
+  .dp-date.selected,
+  .dp-date.selected:hover {
+    background: var(--navy);
+    color: var(--paper);
+    border-color: var(--navy);
+  }
+  .dp-date.selected .dp-day { color: var(--gold); }
+  .dp-date.selected .dp-num { color: #ffffff; }
+  .dp-date.selected .dp-status { color: rgba(255,255,255,0.75); }
+  .dp-date:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--cream);
+  }
+  .dp-date.sold-out {
+    border-style: dashed;
+  }
+  .dp-day {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--crimson);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .dp-num {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--navy);
+    line-height: 1;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .dp-status {
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+    font-family: 'Fraunces', serif;
+  }
+  .dp-status.full { color: var(--crimson); font-style: normal; font-weight: 600; }
+  .dp-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .dp-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--rule);
+    background: transparent;
+    color: var(--navy);
+    transition: all 0.2s;
+  }
+  .dp-btn:hover { background: var(--cream); }
+  .dp-btn.primary {
+    background: var(--navy);
+    color: var(--paper);
+    border-color: var(--navy);
+  }
+  .dp-btn.primary:hover:not(:disabled) { background: var(--crimson); border-color: var(--crimson); }
+  .dp-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .dp-empty {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--muted);
+    font-style: italic;
+    font-family: 'Fraunces', serif;
+  }
+
+  /* ====== CART DRAWER ====== */
+  .cart-drawer {
+    display: none;
+    padding: 24px 32px 28px;
+  }
+  .cart-drawer.active { display: block; }
+  .cart-empty {
+    text-align: center;
+    padding: 48px 16px 24px;
+    color: var(--muted);
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+  }
+  .cart-items { margin-bottom: 20px; }
+  .cart-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+  .cart-item:last-child { border-bottom: none; }
+  .cart-item-name {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--navy);
+    margin-bottom: 4px;
+    letter-spacing: -0.005em;
+  }
+  .cart-item-dates {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .cart-item-dates span { display: block; }
+  .cart-item-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+  .cart-item-price {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--navy);
+  }
+  .cart-item-remove {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    text-decoration: underline;
+    padding: 0;
+  }
+  .cart-item-remove:hover { color: var(--crimson); }
+  .cart-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-top: 16px;
+    border-top: 2px solid var(--navy);
+    margin-bottom: 18px;
+  }
+  .cart-total .label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .cart-total .amount {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 500;
+    color: var(--navy);
+    letter-spacing: -0.01em;
+  }
+  .cart-actions { display: flex; gap: 12px; }
+  .cart-actions .dp-btn { flex: 1; }
+
+  /* ====== WAITLIST MODAL ====== */
+  .waitlist-modal {
+    display: none;
+    padding: 28px 32px;
+  }
+  .waitlist-modal.active { display: block; }
+  .waitlist-intro {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 18px;
+    line-height: 1.55;
+  }
+  .waitlist-intro strong { color: var(--ink); }
+  .waitlist-modal .form-row { margin-bottom: 14px; }
+
+  /* ====== SOLD-OUT BADGE ON PRICE CARD ====== */
+  /* (handled per-date inside picker) */
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="brand">
+      <svg class="brand-mark" viewBox="0 0 40 40" fill="none">
+        <path d="M10 4 Q20 12 10 20 Q0 28 10 36" stroke="#1a2845" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M30 4 Q20 12 30 20 Q40 28 30 36" stroke="#a81e2c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <line x1="12" y1="8" x2="28" y2="8" stroke="#1a2845" stroke-width="1.5"/>
+        <line x1="14" y1="14" x2="26" y2="14" stroke="#a81e2c" stroke-width="1.5"/>
+        <line x1="14" y1="26" x2="26" y2="26" stroke="#1a2845" stroke-width="1.5"/>
+        <line x1="12" y1="32" x2="28" y2="32" stroke="#a81e2c" stroke-width="1.5"/>
+      </svg>
+      DNA<span class="accent">1575</span>
+    </a>
+    <div class="nav-links">
+      <a href="#instructors">Instructors</a>
+      <a href="#how">How It Works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact" class="nav-cta">Reserve Seat</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="hero-eyebrow">SAT Prep · Summer 2026 · Atlanta</div>
+      <h1 class="hero-title display">
+        Two students.<br/>
+        <em>One score</em> away from perfect.
+      </h1>
+      <p class="hero-sub">
+        Small-group SAT prep taught by an incoming UChicago freshman and an incoming Caltech freshman who scored 1570 and 1580.
+        We split the test the way it's meant to be split — Math and Reading — and we teach what we just lived.
+      </p>
+      <div class="hero-actions">
+        <a href="#pricing" class="btn btn-primary">View Classes →</a>
+        <a href="#instructors" class="btn btn-secondary">Meet the Instructors</a>
+      </div>
+    </div>
+    <div class="hero-panel">
+      <div class="panel-label">By the Numbers</div>
+      <div class="stat-row">
+        <span class="stat-num">1575</span>
+        <span class="stat-label">Average SAT score between us</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-num">99<sup style="font-size: 22px;">th</sup></span>
+        <span class="stat-label">Combined percentile, both sections</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-num">3:1</span>
+        <span class="stat-label">Student-to-instructor ratio in small classes</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-num">4hr</span>
+        <span class="stat-label">Per session — both sections, every class</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ MARQUEE ============ -->
+<div class="marquee-strip">
+  <div class="marquee-track">
+    <span>UChicago Class of 2030</span><span class="dot">●</span>
+    <span>Caltech Class of 2030</span><span class="dot">●</span>
+    <span>800 Math &nbsp;·&nbsp; 800 Reading</span><span class="dot">●</span>
+    <span>Atlanta In-Person &nbsp;·&nbsp; Zoom Nationwide</span><span class="dot">●</span>
+    <span>UChicago Class of 2030</span><span class="dot">●</span>
+    <span>Caltech Class of 2030</span><span class="dot">●</span>
+    <span>800 Math &nbsp;·&nbsp; 800 Reading</span><span class="dot">●</span>
+    <span>Atlanta In-Person &nbsp;·&nbsp; Zoom Nationwide</span><span class="dot">●</span>
+  </div>
+</div>
+
+<!-- ============ INSTRUCTORS ============ -->
+<section id="instructors">
+  <div class="section-eyebrow"><span class="num">01</span>Instructors</div>
+  <h2 class="section-title display">Taught by the people who <em>just took the test.</em></h2>
+  <p class="section-sub">Not retired tutors regurgitating outdated strategies. We took the digital SAT the way it exists right now, scored in the top fraction of a percentile, and got into schools that prove it.</p>
+
+  <div class="instructors">
+    <article class="instructor reveal">
+      <div class="instructor-photo">
+        <div class="score-badge"><span class="small">SAT Score</span>1570</div>
+        <img src="assets/jonathan_sq.jpeg" alt="Jonathan Desta" />
+      </div>
+      <div class="instructor-body">
+        <div class="instructor-name">Jonathan Desta</div>
+        <div class="instructor-school">University of Chicago, Class of 2030</div>
+        <div class="instructor-detail"><span class="label">Section</span><span class="value">Math · 800</span></div>
+        <div class="instructor-detail"><span class="label">Reading</span><span class="value">770</span></div>
+        <div class="instructor-detail"><span class="label">Currently</span><span class="value">Multivariable Calculus</span></div>
+        <div class="score-strip">
+          <span class="verified-tag">Verified Score</span>
+          <img src="assets/jonathan_score.png" alt="Jonathan's official SAT score: 1570 (Reading 770, Math 800)" />
+        </div>
+      </div>
+    </article>
+    <article class="instructor reveal">
+      <div class="instructor-photo">
+        <div class="score-badge"><span class="small">SAT Score</span>1580</div>
+        <img src="assets/alex.jpeg" alt="Alex Alexandrov" />
+      </div>
+      <div class="instructor-body">
+        <div class="instructor-name">Alex Alexandrov</div>
+        <div class="instructor-school">California Institute of Technology, Class of 2030</div>
+        <div class="instructor-detail"><span class="label">Section</span><span class="value">Reading · 800</span></div>
+        <div class="instructor-detail"><span class="label">Math</span><span class="value">780</span></div>
+        <div class="instructor-detail"><span class="label">Specialty</span><span class="value">Reading & Writing</span></div>
+        <div class="score-strip">
+          <span class="verified-tag">Verified Score</span>
+          <img src="assets/alex_score.png" alt="Alex's official SAT score: 1580 (Reading 800, Math 780), improved 140 points" />
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section id="how" class="how-section">
+  <div class="how-inner">
+    <div class="section-eyebrow"><span class="num">02</span>How a Class Runs</div>
+    <h2 class="section-title display">Four hours. <em>Both sections.</em> No filler.</h2>
+    <p class="section-sub">Every class covers Math and Reading. We split the room halfway through so each instructor teaches what they're best at, in the format the SAT is actually structured around.</p>
+
+    <div class="schedule-grid">
+      <div class="sched-cell">
+        <div class="sched-mode">In-Person</div>
+        <div class="sched-days">Tuesdays</div>
+        <div class="sched-meta">10:00 AM – 2:00 PM<br/>Chamblee Area Offices · Atlanta, GA<br/>Starting the first week of June 2026</div>
+      </div>
+      <div class="sched-cell">
+        <div class="sched-mode">Zoom</div>
+        <div class="sched-days">Wednesdays</div>
+        <div class="sched-meta">10:00 AM – 2:00 PM<br/>Live, interactive · Camera on encouraged<br/>Starting the first week of June 2026</div>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="step">
+        <div class="step-time">10:00 – 11:50 AM</div>
+        <div class="step-name">Block I</div>
+        <div class="step-desc">Group A with Jonathan (Math), Group B with Alex (Reading) — 110 minutes</div>
+      </div>
+      <div class="step">
+        <div class="step-time">11:50 AM – 12:10 PM</div>
+        <div class="step-name">Break</div>
+        <div class="step-desc">Snacks, Gatorade, group transition — 20 minutes</div>
+      </div>
+      <div class="step">
+        <div class="step-time">12:10 – 2:00 PM</div>
+        <div class="step-name">Block II</div>
+        <div class="step-desc">Groups switch — Group A with Alex, Group B with Jonathan — 110 minutes</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRICING ============ -->
+<section id="pricing">
+  <div class="section-eyebrow"><span class="num">03</span>Pricing</div>
+  <h2 class="section-title display">Two packages. <em>Pick your dates.</em></h2>
+  <p class="section-sub">Small-group SAT prep, capped at 3 students per class. Two-day packages give you a full math + reading rotation twice. All prices per student.</p>
+
+  <div class="discount-ribbon" style="background:var(--crimson);">
+    <div class="left">
+      <span class="badge" style="background:var(--gold);color:var(--navy);">SUMMER SALE</span>
+      <span class="text">Every package on sale &mdash; in-person two-day <strong>$150 off</strong>, in-person one-day <strong>$100 off</strong>, Zoom two-day <strong>$100 off</strong>, Zoom one-day <strong>$50 off</strong>. Sale prices shown below.</span>
+    </div>
+    <span class="right" style="color:#fff;">Limited time</span>
+  </div>
+
+  <div class="discount-ribbon">
+    <div class="left">
+      <span class="badge">REFER &amp; SAVE $30</span>
+      <span class="text">Refer a friend and get <strong>$30 off</strong> your next class for every friend who books. <a href="#contact" style="color:var(--gold);text-decoration:underline;">Email or text us</a> their name when they enroll &mdash; we'll send your credit.</span>
+    </div>
+    <span class="right"><a href="#contact">&rarr; Contact us</a></span>
+  </div>
+
+  <div class="pricing-tabs">
+    <button class="pricing-tab active" data-tab="inperson">In-Person</button>
+    <button class="pricing-tab" data-tab="zoom">Zoom</button>
+  </div>
+
+  <!-- IN-PERSON -->
+  <div class="pricing-grid" data-pane="inperson">
+    <div class="price-card">
+      <div class="price-header">
+        <span class="price-mode">In-Person</span>
+        <span class="price-size">Class of 3</span>
+      </div>
+      <div class="price-name">Single Day</div>
+      <div class="price-amount"><span style="font-family:'Manrope',sans-serif;font-size:18px;font-weight:500;color:var(--muted);text-decoration:line-through;margin-right:10px;vertical-align:middle;">$449</span><span class="dollar">$</span>349</div>
+      <div class="price-tag"><span style="color:var(--crimson);font-weight:700;">Summer sale &middot; $100 off</span> &middot; One 4-hour session &middot; per student</div>
+      <ul class="price-features">
+        <li>Class of up to 3 students</li>
+        <li>Tuesdays · 10:00 AM – 2:00 PM</li>
+        <li>More individual attention</li>
+        <li>Snacks &amp; Gatorade included</li>
+      </ul>
+      <button type="button" class="price-btn" data-package="inperson-3-1day">Pick a Date</button>
+    </div>
+
+    <div class="price-card featured">
+      <div class="price-header">
+        <span class="price-mode">In-Person</span>
+        <span class="price-size">Class of 3</span>
+      </div>
+      <div class="price-name">Two-Day Package</div>
+      <div class="price-amount"><span style="font-family:'Fraunces',serif;font-size:22px;font-weight:400;color:rgba(247,244,238,0.55);text-decoration:line-through;margin-right:10px;vertical-align:middle;">$695</span><span class="dollar">$</span>545</div>
+      <div class="price-tag"><span style="color:var(--gold);font-weight:700;">Summer sale &middot; $150 off</span> &middot; Two 4-hour sessions &middot; per student</div>
+      <ul class="price-features">
+        <li>Class of up to 3 students</li>
+        <li>Pick 2 days · swap one for a Wednesday Zoom if you want</li>
+        <li>Highest individual attention level</li>
+        <li>Snacks &amp; Gatorade included</li>
+      </ul>
+      <button type="button" class="price-btn" data-package="inperson-3-2day">Pick 2 Dates</button>
+    </div>
+  </div>
+
+  <!-- ZOOM -->
+  <div class="pricing-grid" data-pane="zoom" style="display: none;">
+    <div class="price-card">
+      <div class="price-header">
+        <span class="price-mode">Zoom</span>
+        <span class="price-size">Class of 3</span>
+      </div>
+      <div class="price-name">Single Day</div>
+      <div class="price-amount"><span style="font-family:'Manrope',sans-serif;font-size:18px;font-weight:500;color:var(--muted);text-decoration:line-through;margin-right:10px;vertical-align:middle;">$249</span><span class="dollar">$</span>199</div>
+      <div class="price-tag"><span style="color:var(--crimson);font-weight:700;">Summer sale &middot; $50 off</span> &middot; One 4-hour session &middot; per student</div>
+      <ul class="price-features">
+        <li>Class of up to 3 students</li>
+        <li>Wednesdays · 10:00 AM – 2:00 PM</li>
+        <li>Live, interactive instruction</li>
+        <li>Anywhere in the U.S.</li>
+      </ul>
+      <button type="button" class="price-btn" data-package="zoom-3-1day">Pick a Date</button>
+    </div>
+
+    <div class="price-card featured">
+      <div class="price-header">
+        <span class="price-mode">Zoom</span>
+        <span class="price-size">Class of 3</span>
+      </div>
+      <div class="price-name">Two-Day Package</div>
+      <div class="price-amount"><span style="font-family:'Fraunces',serif;font-size:22px;font-weight:400;color:rgba(247,244,238,0.55);text-decoration:line-through;margin-right:10px;vertical-align:middle;">$399</span><span class="dollar">$</span>299</div>
+      <div class="price-tag"><span style="color:var(--gold);font-weight:700;">Summer sale &middot; $100 off</span> &middot; Two 4-hour sessions &middot; per student</div>
+      <ul class="price-features">
+        <li>Class of up to 3 students</li>
+        <li>Two Wednesdays · 10:00 AM – 2:00 PM</li>
+        <li>Highest individual attention level</li>
+        <li>Anywhere in the U.S.</li>
+      </ul>
+      <button type="button" class="price-btn" data-package="zoom-3-2day">Pick 2 Dates</button>
+    </div>
+  </div>
+
+  <p class="more-coming-note">More options coming as we grow. Want a different class size or different days? <a href="#contact">Reach out</a> and we&rsquo;ll see what we can do.</p>
+
+  <div style="margin-top:24px;padding:18px 22px;background:var(--cream);border:1px solid var(--rule);border-radius:4px;text-align:center;font-size:15px;color:var(--ink);">
+    Already reserved a seat? <a href="onboarding.html" style="color:var(--crimson);font-weight:600;text-decoration:none;border-bottom:1px solid var(--crimson);margin-left:4px;">Complete your student onboarding form &rarr;</a>
+  </div>
+
+</section>
+
+<!-- ============ LOCATION + INCLUDED ============ -->
+<section>
+  <div class="section-eyebrow"><span class="num">04</span>The Details</div>
+  <h2 class="section-title display">What you get when you walk in.</h2>
+
+  <div class="two-col">
+    <div class="info-card">
+      <h3>Location · In-Person</h3>
+      <p>Our in-person classes run at <strong>Chamblee Area Offices</strong> in Atlanta, GA. The exact suite and parking instructions are sent with your booking confirmation.</p>
+      <p>Tuesdays, 10:00 AM – 2:00 PM, starting the first week of June 2026.</p>
+      <p style="font-size: 13px; font-style: italic; color: var(--muted);">Location is tentative until first class — we'll confirm the exact room with all reserved students one week before the start date.</p>
+    </div>
+
+    <div class="info-card">
+      <h3>Included with Every Class</h3>
+      <ul class="included-list">
+        <li><span class="included-icon">✦</span><span>Both SAT sections in one class — Math and Reading</span></li>
+        <li><span class="included-icon">✦</span><span>Two real instructors, never recordings</span></li>
+        <li><span class="included-icon">✦</span><span>Snacks (chips) and Gatorade at every in-person class</span></li>
+        <li><span class="included-icon">✦</span><span>Q&amp;A and hardest-problem walkthroughs</span></li>
+        <li><span class="included-icon">✦</span><span>Strategy from people who scored in the top percentile this year</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section id="faq">
+  <div class="section-eyebrow"><span class="num">05</span>Frequently Asked</div>
+  <h2 class="section-title display">Quick answers.</h2>
+
+  <div class="faq">
+    <div class="faq-item">
+      <button class="faq-q">How is a four-hour class structured?<span class="icon">+</span></button>
+      <div class="faq-a"><p>Each class is two 110-minute teaching blocks with a 20-minute break in between — exactly four hours total. Halfway through, the groups swap instructors so every student gets a full block of dedicated time on both Math and Reading.</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">How small is the class, really?<span class="icon">+</span></button>
+      <div class="faq-a"><p>Capped at 3 students per class. That's roughly a 1.5:1 student-to-instructor ratio when we split for the math/reading blocks — about as close to private tutoring as group instruction gets, at a fraction of the per-hour cost.</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">Why pay full price when AI tutors are free?<span class="icon">+</span></button>
+      <div class="faq-a"><p>Live instruction from people who just scored in the top percentile gives you what AI can't — read of your specific mistakes, instinct for which strategies fail under timed pressure, and accountability. We've taken this exact test recently. We know which traps the College Board still uses and which ones got retired.</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">Can I do both in-person and Zoom in the same week?<span class="icon">+</span></button>
+      <div class="faq-a"><p>Yes. Tuesdays are in-person; Wednesdays are Zoom. You can mix and match — though pricing is per session, so two classes means two reservations.</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">What's the refund policy?<span class="icon">+</span></button>
+      <div class="faq-a"><p>Full refund if you cancel more than 48 hours before the class start time. Inside 48 hours, we can transfer your seat to a future class but cannot refund. Contact us directly for any scheduling issues.</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">How does the Zelle/Venmo discount work?<span class="icon">+</span></button>
+      <div class="faq-a"><p>Stripe charges us processing fees we'd rather not pass on. If you use Zelle or Venmo, we save those fees and pass $5 per student back to you. Contact us directly via email or text and we'll send you handles + a confirmation flow.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACT ============ -->
+<section id="contact">
+  <div class="contact-card">
+    <h2 class="display">Reserve a seat or <em>just ask a question.</em></h2>
+    <p>Card payments handled directly on this site — click "Reserve Seat" on any package above. For Zelle, Venmo, or any questions, reach out directly.</p>
+
+    <p style="margin-top:20px;font-size:15px;color:rgba(247,244,238,0.75);">Already reserved a seat? <a href="onboarding.html" style="color:var(--gold);font-weight:600;text-decoration:none;border-bottom:1px solid rgba(200,169,106,0.4);">Complete your student onboarding form →</a></p>
+
+    <div class="contact-grid">
+      <div class="contact-person">
+        <h4>Jonathan Desta</h4>
+        <div class="role">Math Instructor · UChicago '30</div>
+        <a href="mailto:jdjonathandesta@gmail.com">jdjonathandesta@gmail.com</a>
+        <a href="tel:+16785580650">(678) 558-0650</a>
+      </div>
+      <div class="contact-person">
+        <h4>Alex Alexandrov</h4>
+        <div class="role">Reading Instructor · Caltech '30</div>
+        <a href="mailto:alex.alexandrov734@gmail.com">alex.alexandrov734@gmail.com</a>
+        <a href="tel:+14708106513">(470) 810-6513</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="footer-inner">
+    <div>© 2026 DNA1575 · SAT Prep Specialists · Atlanta, GA</div>
+    <div>Built by <a href="#">Desta &amp; Alexandrov</a></div>
+  </div>
+</footer>
+
+<!-- ============ FLOATING CART BUTTON ============ -->
+<button class="cart-button" id="cart-button" aria-label="Open cart">
+  <span class="count" id="cart-count">0</span>
+  <span>Cart</span>
+  <span class="total" id="cart-button-total">$0</span>
+</button>
+
+<!-- ============ MULTI-PANEL MODAL ============ -->
+<div class="modal-overlay" id="checkout-modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+  <div class="modal" id="modal-inner">
+    <button class="modal-close" id="modal-close" aria-label="Close">×</button>
+
+    <!-- ===== Panel: Date Picker ===== -->
+    <div class="modal-header" id="dp-header">
+      <div class="modal-eyebrow">Pick Your Date<span id="dp-plural"></span></div>
+      <div class="modal-title" id="dp-title">Class of 3 · Single Day</div>
+      <div class="modal-sub" id="dp-sub">In-Person · Atlanta, GA</div>
+    </div>
+    <div class="date-picker active" id="date-picker">
+      <div class="dp-instruction" id="dp-instruction">
+        <strong>Select a date.</strong> Classes run 10:00 AM &ndash; 2:00 PM.
+      </div>
+      <div class="dp-grid" id="dp-grid">
+        <!-- Date cells injected by JS -->
+      </div>
+      <div class="dp-actions">
+        <button type="button" class="dp-btn" id="dp-cancel">Cancel</button>
+        <button type="button" class="dp-btn primary" id="dp-add" disabled>Add to Cart</button>
+      </div>
+      <div style="margin-top:18px;padding:14px 16px;background:var(--cream);border-left:3px solid var(--gold);border-radius:4px;font-size:13px;color:var(--ink);line-height:1.55;">
+        <strong style="color:var(--crimson);">Refer &amp; save $30.</strong> For every friend who books, you get $30 off your next class. After they enroll, <a href="#contact" style="color:var(--navy);font-weight:600;">email or text us</a> their name to claim your credit.
+      </div>
+    </div>
+
+    <!-- ===== Panel: Cart ===== -->
+    <div class="modal-header" id="cart-header" style="display:none;">
+      <div class="modal-eyebrow">Your Cart</div>
+      <div class="modal-title">Review &amp; check out</div>
+      <div class="modal-sub" id="cart-sub">2 items in cart</div>
+    </div>
+    <div class="cart-drawer" id="cart-drawer">
+      <div class="cart-empty" id="cart-empty" style="display:none;">Your cart is empty. Pick a class above.</div>
+      <div class="cart-items" id="cart-items"></div>
+      <div class="cart-total" id="cart-total-row">
+        <span class="label">Total</span>
+        <span class="amount" id="cart-total">$0</span>
+      </div>
+      <div class="cart-actions">
+        <button type="button" class="dp-btn" id="cart-keep-shopping">Keep Shopping</button>
+        <button type="button" class="dp-btn primary" id="cart-checkout">Check Out</button>
+      </div>
+    </div>
+
+    <!-- ===== Panel: Checkout ===== -->
+    <div class="modal-header" id="checkout-header" style="display:none;">
+      <div class="modal-eyebrow">Checkout</div>
+      <div class="modal-title">Reserve your seat<span id="co-plural"></span></div>
+      <div class="modal-sub" id="co-sub">Card payment</div>
+      <div class="modal-summary">
+        <span class="total-label">Total</span>
+        <span class="total-amount" id="modal-total">$0</span>
+      </div>
+    </div>
+    <div class="modal-body" id="checkout-body" style="display:none;">
+      <form id="payment-form" novalidate>
+        <div class="form-row-pair">
+          <div class="form-row">
+            <label for="cust-name">Full Name</label>
+            <input type="text" id="cust-name" name="name" required autocomplete="name" />
+            <div class="error-msg" id="err-name">Please enter your full name.</div>
+          </div>
+          <div class="form-row">
+            <label for="cust-phone">Phone</label>
+            <input type="tel" id="cust-phone" name="phone" required autocomplete="tel" placeholder="(555) 555-5555" />
+            <div class="error-msg" id="err-phone">Please enter a valid phone number.</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="cust-email">Email Address</label>
+          <input type="email" id="cust-email" name="email" required autocomplete="email" placeholder="you@example.com" />
+          <div class="error-msg" id="err-email">Please enter a valid email.</div>
+        </div>
+
+        <div class="form-row">
+          <label for="card-element">Card Information</label>
+          <div id="card-element"></div>
+          <div id="card-errors" role="alert"></div>
+        </div>
+
+        <div class="dp-actions" style="margin-bottom:12px;">
+          <button type="button" class="dp-btn" id="co-back">&larr; Back to Cart</button>
+        </div>
+
+        <button type="submit" class="pay-btn" id="pay-btn" disabled>
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="label">Pay <span id="pay-amount">$0</span></span>
+        </button>
+        <div class="secure-note">🔒 Secured by Stripe &middot; Your card information never touches our servers</div>
+        <div style="margin-top:14px;padding:12px 14px;background:var(--cream);border-left:3px solid var(--gold);border-radius:4px;font-size:12.5px;color:var(--ink);line-height:1.5;">
+          <strong style="color:var(--crimson);">Refer &amp; save $30.</strong> Bring a friend &mdash; once they book, <a href="#contact" style="color:var(--navy);font-weight:600;">email or text us</a> their name and we&rsquo;ll credit your next class.
+        </div>
+        <div style="margin-top:8px;padding:12px 14px;background:var(--cream);border-left:3px solid var(--navy);border-radius:4px;font-size:12.5px;color:var(--ink);line-height:1.5;">
+          <strong>Save $5</strong> by paying with <strong>Zelle</strong> or <strong>Venmo</strong> instead &mdash; <a href="#contact" style="color:var(--navy);font-weight:600;">contact us</a> for handles.
+        </div>
+      </form>
+    </div>
+
+    <!-- ===== Panel: Waitlist ===== -->
+    <div class="modal-header" id="waitlist-header" style="display:none;">
+      <div class="modal-eyebrow">Join the Waitlist</div>
+      <div class="modal-title" id="wl-title">Class is full</div>
+      <div class="modal-sub" id="wl-sub">We'll reach out if a spot opens.</div>
+    </div>
+    <div class="waitlist-modal" id="waitlist-panel">
+      <div class="waitlist-intro">
+        Drop your info and we'll personally reach out if anyone cancels. <strong>No card required, no charge unless we confirm a spot with you.</strong>
+      </div>
+      <form id="waitlist-form" novalidate>
+        <div class="form-row-pair">
+          <div class="form-row">
+            <label for="wl-name">Full Name</label>
+            <input type="text" id="wl-name" required autocomplete="name" />
+            <div class="error-msg" id="wl-err-name">Please enter your full name.</div>
+          </div>
+          <div class="form-row">
+            <label for="wl-phone">Phone</label>
+            <input type="tel" id="wl-phone" required autocomplete="tel" placeholder="(555) 555-5555" />
+            <div class="error-msg" id="wl-err-phone">Please enter a valid phone number.</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="wl-email">Email Address</label>
+          <input type="email" id="wl-email" required autocomplete="email" placeholder="you@example.com" />
+          <div class="error-msg" id="wl-err-email">Please enter a valid email.</div>
+        </div>
+        <div class="dp-actions">
+          <button type="button" class="dp-btn" id="wl-cancel">Cancel</button>
+          <button type="submit" class="dp-btn primary" id="wl-submit">Join Waitlist</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ===== Panel: Success ===== -->
+    <div class="success-content">
+      <div class="success-icon">✓</div>
+      <div class="success-title" id="success-title">You're booked!</div>
+      <div class="success-msg" id="success-msg">Thanks, <strong id="success-name">friend</strong>. We've sent a confirmation to <strong id="success-email">your email</strong> with class details and what to bring. See you soon!</div>
+      <a href="onboarding.html" class="success-btn" style="display:inline-block;text-decoration:none;margin-bottom:12px;">Complete Onboarding Form →</a>
+      <br>
+      <button class="success-btn" id="success-close" style="background:transparent;color:var(--muted);font-size:13px;padding:8px 16px;">Skip for now</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // DNA1575 — Cart + Date Picker + Stripe Checkout
+  // ============================================================
+
+  // ====== Package catalog (display) — server has source of truth ======
+  const PACKAGES = {
+    'inperson-3-1day': { name: 'Class of 3 · Single Day',      mode: 'inperson', sessions: 1, price: 349, modeLabel: 'In-Person · Atlanta, GA' },
+    'inperson-3-2day': { name: 'Class of 3 · Two-Day Package', mode: 'inperson', sessions: 2, price: 545, modeLabel: 'In-Person · Atlanta, GA' },
+    'zoom-3-1day':     { name: 'Class of 3 · Single Day',      mode: 'zoom',     sessions: 1, price: 199, modeLabel: 'Zoom · Live nationwide' },
+    'zoom-3-2day':     { name: 'Class of 3 · Two-Day Package', mode: 'zoom',     sessions: 2, price: 299, modeLabel: 'Zoom · Live nationwide' },
+  };
+
+  const MAX_CAPACITY = 3;
+  const BOOKING_WINDOW_DAYS = 14;
+  const FIRST_AVAILABLE_DATE = new Date(2026, 5, 1); // June 1, 2026 (first week of June)
+  FIRST_AVAILABLE_DATE.setHours(0,0,0,0);
+
+  // Map day-of-week → mode. Tue=inperson, Wed=zoom.
+  function modeForDay(dayOfWeek) {
+    if (dayOfWeek === 2) return 'inperson';
+    if (dayOfWeek === 3) return 'zoom';
+    return null;
+  }
+
+  // ====== Pricing tabs ======
+  const tabs = document.querySelectorAll('.pricing-tab');
+  const panes = document.querySelectorAll('[data-pane]');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      panes.forEach(p => {
+        p.style.display = p.dataset.pane === tab.dataset.tab ? 'grid' : 'none';
+      });
+    });
+  });
+
+  // ====== FAQ accordion ======
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.querySelector('.faq-q').addEventListener('click', () => {
+      item.classList.toggle('open');
+    });
+  });
+
+  // ====== Reveal-on-scroll ======
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // ====== Stripe setup ======
+  // Replace with your live publishable key when going live.
+  const STRIPE_PUBLISHABLE_KEY = 'pk_test_51TVM1URuATJdOMDS1sMJuOVnCaEWLCEroprrbFCUDOaJaaImQLYoWvuCT4l0BMQth7KdJEbzRyariiUlfB5atTMO00Lt4xzYkg';
+  const stripe = (typeof Stripe !== 'undefined' && STRIPE_PUBLISHABLE_KEY.startsWith('pk_'))
+    ? Stripe(STRIPE_PUBLISHABLE_KEY)
+    : null;
+  let elements, cardElement;
+
+  if (stripe) {
+    elements = stripe.elements();
+    cardElement = elements.create('card', {
+      style: {
+        base: {
+          fontFamily: '"Manrope", system-ui, sans-serif',
+          fontSize: '15px',
+          color: '#14182a',
+          '::placeholder': { color: '#6b6e7a' },
+        },
+        invalid: { color: '#a81e2c' },
+      },
+    });
+    // Mounted on first checkout entry (avoids mount-before-visible issues)
+  }
+  let cardMounted = false;
+  function mountCardIfNeeded() {
+    if (stripe && cardElement && !cardMounted) {
+      cardElement.mount('#card-element');
+      cardElement.on('change', (event) => {
+        const errorEl = document.getElementById('card-errors');
+        errorEl.textContent = event.error ? event.error.message : '';
+        updatePayButton();
+      });
+      cardMounted = true;
+    }
+  }
+
+  // ====== Modal panel switching ======
+  const modal = document.getElementById('checkout-modal');
+  const modalInner = document.getElementById('modal-inner');
+
+  const PANELS = {
+    'date-picker': ['dp-header', 'date-picker'],
+    'cart':        ['cart-header', 'cart-drawer'],
+    'checkout':    ['checkout-header', 'checkout-body'],
+    'waitlist':    ['waitlist-header', 'waitlist-panel'],
+    'success':     [],  // success uses modal.success-state
+  };
+  const ALL_PANEL_NODES = ['dp-header', 'date-picker', 'cart-header', 'cart-drawer', 'checkout-header', 'checkout-body', 'waitlist-header', 'waitlist-panel'];
+  function showPanel(name) {
+    modalInner.classList.remove('success-state');
+    ALL_PANEL_NODES.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    if (name === 'success') {
+      modalInner.classList.add('success-state');
+      return;
+    }
+    PANELS[name].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      // Pick display value based on element type
+      const display = el.classList.contains('modal-body') || el.classList.contains('date-picker')
+        || el.classList.contains('cart-drawer') || el.classList.contains('waitlist-modal')
+        || el.classList.contains('modal-header')
+        ? 'block' : '';
+      el.style.display = display;
+    });
+  }
+
+  function openModal(panel) {
+    showPanel(panel);
+    modal.classList.add('active');
+    document.body.classList.add('modal-open');
+  }
+  function closeModal() {
+    modal.classList.remove('active');
+    document.body.classList.remove('modal-open');
+  }
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+  });
+
+  // ====== Cart state (in-memory; persists in sessionStorage for back-button safety) ======
+  let cart = loadCart();
+  function loadCart() {
+    try {
+      const raw = sessionStorage.getItem('dna1575_cart');
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  }
+  function saveCart() {
+    try { sessionStorage.setItem('dna1575_cart', JSON.stringify(cart)); } catch {}
+  }
+  function cartTotal() {
+    return cart.reduce((sum, item) => sum + item.price, 0);
+  }
+
+  // ====== Floating cart button ======
+  const cartButton = document.getElementById('cart-button');
+  const cartCountEl = document.getElementById('cart-count');
+  const cartBtnTotalEl = document.getElementById('cart-button-total');
+  function renderCartButton() {
+    if (cart.length === 0) {
+      cartButton.classList.remove('visible');
+    } else {
+      cartButton.classList.add('visible');
+      cartCountEl.textContent = String(cart.length);
+      cartBtnTotalEl.textContent = '$' + cartTotal();
+    }
+  }
+  cartButton.addEventListener('click', () => {
+    renderCart();
+    openModal('cart');
+  });
+  renderCartButton();
+
+  // ====== Date picker ======
+  let currentPackageId = null;
+  let selectedDates = []; // ISO date strings 'YYYY-MM-DD'
+  let availabilityCache = null;
+
+  // Generate dates within the booking window. For 1-day packages, only the matching mode's day.
+  // For 2-day packages, both Tue (in-person) and Wed (Zoom) — students can mix.
+  // Start from the later of today or FIRST_AVAILABLE_DATE (first week of June 2026).
+  function getOfferedDates(mode, sessions) {
+    const out = [];
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const start = today > FIRST_AVAILABLE_DATE ? today : FIRST_AVAILABLE_DATE;
+    // In-person 2-day may swap in a Wednesday (Zoom); Zoom 2-day stays Wed-only.
+    const validDays = (sessions === 2 && mode === 'inperson') ? [2, 3]
+                    : (mode === 'inperson' ? [2] : [3]);
+    for (let i = 0; i < BOOKING_WINDOW_DAYS; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      if (validDays.includes(d.getDay())) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        out.push(`${yyyy}-${mm}-${dd}`);
+      }
+    }
+    return out;
+  }
+  function formatDate(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    const day = dt.toLocaleDateString('en-US', { weekday: 'short' });
+    const md = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return { day, md, dayNum: dt.getDay() };
+  }
+
+  async function fetchAvailability(mode) {
+    try {
+      const res = await fetch('/api/availability?mode=' + mode);
+      if (!res.ok) return {};
+      const data = await res.json();
+      return data.classes || {};
+    } catch {
+      // Endpoint not configured yet (e.g., previewing as file://) — show all as available.
+      return {};
+    }
+  }
+
+  function openDatePicker(packageId) {
+    const pkg = PACKAGES[packageId];
+    if (!pkg) return;
+    currentPackageId = packageId;
+    selectedDates = [];
+
+    document.getElementById('dp-title').textContent = pkg.name;
+    document.getElementById('dp-sub').textContent = (pkg.sessions === 2 && pkg.mode === 'inperson')
+      ? pkg.modeLabel + ' · swap one day for a Wednesday Zoom if you want'
+      : pkg.modeLabel;
+    document.getElementById('dp-plural').textContent = pkg.sessions === 2 ? 's' : '';
+    updateDPInstruction();
+
+    openModal('date-picker');
+    renderDateGrid(pkg);
+  }
+
+  async function renderDateGrid(pkg) {
+    const grid = document.getElementById('dp-grid');
+    grid.innerHTML = '<div class="dp-empty">Loading available dates...</div>';
+
+    const offered = getOfferedDates(pkg.mode, pkg.sessions);
+    if (offered.length === 0) {
+      grid.innerHTML = '<div class="dp-empty">No classes available right now. Check back soon or contact us.</div>';
+      return;
+    }
+
+    // In-person 2-day allows mixing in a Wednesday (Zoom), so fetch both then.
+    const needBoth = pkg.sessions === 2 && pkg.mode === 'inperson';
+    const [availInp, availZoom] = await Promise.all([
+      pkg.mode === 'inperson' || needBoth ? fetchAvailability('inperson') : Promise.resolve(null),
+      pkg.mode === 'zoom'     || needBoth ? fetchAvailability('zoom')     : Promise.resolve(null),
+    ]);
+    const availByMode = { inperson: availInp || {}, zoom: availZoom || {} };
+
+    grid.innerHTML = '';
+    offered.forEach(iso => {
+      const { day, md, dayNum } = formatDate(iso);
+      const dateMode = modeForDay(dayNum);
+      const avail = availByMode[dateMode] || {};
+      const booked = (avail[iso] && typeof avail[iso].booked === 'number') ? avail[iso].booked : 0;
+      const remaining = MAX_CAPACITY - booked;
+      const isFull = remaining <= 0;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'dp-date' + (isFull ? ' sold-out' : '');
+      btn.dataset.date = iso;
+      btn.dataset.mode = dateMode;
+      const modeTag = needBoth
+        ? `<div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;color:${dateMode === 'inperson' ? 'var(--navy)' : 'var(--crimson)'};margin-top:4px;">${dateMode === 'inperson' ? 'In-Person' : 'Zoom'}</div>`
+        : '';
+      const statusHtml = isFull
+        ? '<div class="dp-status full">Waitlist</div>'
+        : `<div class="dp-status">${remaining} seat${remaining === 1 ? '' : 's'} left</div>`;
+      btn.innerHTML = `
+        <div class="dp-day">${day}</div>
+        <div class="dp-num">${md}</div>
+        ${statusHtml}
+        ${modeTag}
+      `;
+      btn.addEventListener('click', () => handleDateClick(iso, isFull, pkg));
+      grid.appendChild(btn);
+    });
+  }
+
+  function handleDateClick(iso, isFull, pkg) {
+    if (isFull) {
+      openWaitlist(iso);
+      return;
+    }
+    if (pkg.sessions === 1) {
+      selectedDates = [iso];
+    } else {
+      // Two-day: toggle membership, max 2
+      const idx = selectedDates.indexOf(iso);
+      if (idx >= 0) {
+        selectedDates.splice(idx, 1);
+      } else {
+        if (selectedDates.length >= 2) {
+          selectedDates.shift(); // drop oldest
+        }
+        selectedDates.push(iso);
+      }
+    }
+    document.querySelectorAll('.dp-date').forEach(el => {
+      el.classList.toggle('selected', selectedDates.includes(el.dataset.date));
+    });
+    updateDPInstruction();
+  }
+
+  function updateDPInstruction() {
+    const pkg = PACKAGES[currentPackageId];
+    if (!pkg) return;
+    const instr = document.getElementById('dp-instruction');
+    const addBtn = document.getElementById('dp-add');
+    if (pkg.sessions === 1) {
+      if (selectedDates.length === 1) {
+        const { day, md } = formatDate(selectedDates[0]);
+        instr.innerHTML = `<strong>${day}, ${md}</strong> selected. Ready to add to cart.`;
+        instr.classList.add('complete');
+        addBtn.disabled = false;
+      } else {
+        instr.innerHTML = `<strong>Select a date</strong> from upcoming classes. Classes run 10:00 AM &ndash; 2:00 PM.`;
+        instr.classList.remove('complete');
+        addBtn.disabled = true;
+      }
+    } else {
+      if (selectedDates.length === 2) {
+        const a = formatDate(selectedDates[0]);
+        const b = formatDate(selectedDates[1]);
+        instr.innerHTML = `<strong>${a.day} ${a.md}</strong> &amp; <strong>${b.day} ${b.md}</strong> selected. Ready to add to cart.`;
+        instr.classList.add('complete');
+        addBtn.disabled = false;
+      } else {
+        instr.innerHTML = `<strong>Select 2 dates</strong> from upcoming classes. (${selectedDates.length}/2 chosen.)`;
+        instr.classList.remove('complete');
+        addBtn.disabled = true;
+      }
+    }
+  }
+
+  // ====== Add to cart ======
+  document.querySelectorAll('[data-package]').forEach(btn => {
+    btn.addEventListener('click', () => openDatePicker(btn.dataset.package));
+  });
+  document.getElementById('dp-cancel').addEventListener('click', closeModal);
+  document.getElementById('dp-add').addEventListener('click', () => {
+    const pkg = PACKAGES[currentPackageId];
+    if (!pkg) return;
+    if (selectedDates.length !== pkg.sessions) return;
+    cart.push({
+      id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+      packageId: currentPackageId,
+      dates: [...selectedDates].sort(),
+      price: pkg.price,
+    });
+    saveCart();
+    renderCartButton();
+    renderCart();
+    openModal('cart');
+  });
+
+  // ====== Cart panel ======
+  function renderCart() {
+    const itemsEl = document.getElementById('cart-items');
+    const emptyEl = document.getElementById('cart-empty');
+    const totalEl = document.getElementById('cart-total');
+    const subEl = document.getElementById('cart-sub');
+    const totalRow = document.getElementById('cart-total-row');
+    const checkoutBtn = document.getElementById('cart-checkout');
+
+    if (cart.length === 0) {
+      itemsEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      totalRow.style.display = 'none';
+      subEl.textContent = '0 items in cart';
+      checkoutBtn.disabled = true;
+      checkoutBtn.style.opacity = '0.4';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    totalRow.style.display = 'flex';
+    checkoutBtn.disabled = false;
+    checkoutBtn.style.opacity = '1';
+
+    subEl.textContent = `${cart.length} item${cart.length === 1 ? '' : 's'} in cart`;
+    itemsEl.innerHTML = '';
+    cart.forEach(item => {
+      const pkg = PACKAGES[item.packageId];
+      const mixable = pkg.sessions === 2 && pkg.mode === 'inperson';
+      const datesHtml = item.dates.map(iso => {
+        const { day, md, dayNum } = formatDate(iso);
+        const dateMode = modeForDay(dayNum);
+        const tag = mixable
+          ? ` <span style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;color:${dateMode === 'inperson' ? 'var(--navy)' : 'var(--crimson)'};">· ${dateMode === 'inperson' ? 'In-Person' : 'Zoom'}</span>`
+          : '';
+        return `<span>${day}, ${md}${tag}</span>`;
+      }).join('');
+      const headerLabel = mixable
+        ? 'In-Person 2-Day · per-date format below'
+        : pkg.modeLabel;
+      const row = document.createElement('div');
+      row.className = 'cart-item';
+      row.innerHTML = `
+        <div>
+          <div class="cart-item-name">${escapeHtml(pkg.name)}</div>
+          <div class="cart-item-dates">
+            <span style="font-weight:600;color:var(--ink);">${escapeHtml(headerLabel)}</span>
+            ${datesHtml}
+          </div>
+        </div>
+        <div class="cart-item-right">
+          <div class="cart-item-price">$${item.price}</div>
+          <button type="button" class="cart-item-remove" data-cart-item="${item.id}">Remove</button>
+        </div>
+      `;
+      itemsEl.appendChild(row);
+    });
+    totalEl.textContent = '$' + cartTotal();
+
+    itemsEl.querySelectorAll('[data-cart-item]').forEach(btn => {
+      btn.addEventListener('click', () => removeFromCart(btn.dataset.cartItem));
+    });
+  }
+  function removeFromCart(id) {
+    cart = cart.filter(i => i.id !== id);
+    saveCart();
+    renderCartButton();
+    renderCart();
+    if (cart.length === 0) closeModal();
+  }
+  document.getElementById('cart-keep-shopping').addEventListener('click', closeModal);
+  document.getElementById('cart-checkout').addEventListener('click', () => {
+    if (cart.length === 0) return;
+    document.getElementById('co-plural').textContent = cart.length === 1 && cart[0].dates.length === 1 ? '' : 's';
+    document.getElementById('co-sub').textContent = cart.length + ' item' + (cart.length === 1 ? '' : 's') + ' · Card payment';
+    document.getElementById('modal-total').textContent = '$' + cartTotal();
+    document.getElementById('pay-amount').textContent = '$' + cartTotal();
+    openModal('checkout');
+    mountCardIfNeeded();
+    setTimeout(() => document.getElementById('cust-name').focus(), 50);
+  });
+  document.getElementById('co-back').addEventListener('click', () => {
+    renderCart();
+    openModal('cart');
+  });
+
+  // ====== Form validation ======
+  const nameEl = document.getElementById('cust-name');
+  const emailEl = document.getElementById('cust-email');
+  const phoneEl = document.getElementById('cust-phone');
+  const payBtn = document.getElementById('pay-btn');
+
+  function isValidEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim()); }
+  function isValidPhone(s) { return s.replace(/\D/g, '').length >= 10; }
+  function clearFieldErrors() {
+    [nameEl, emailEl, phoneEl].forEach(el => el.classList.remove('error'));
+    document.querySelectorAll('#payment-form .error-msg').forEach(el => el.classList.remove('visible'));
+  }
+  function updatePayButton() {
+    const ready = nameEl.value.trim().length > 1
+      && isValidEmail(emailEl.value)
+      && isValidPhone(phoneEl.value)
+      && cardElement
+      && cart.length > 0;
+    payBtn.disabled = !ready;
+  }
+  [nameEl, emailEl, phoneEl].forEach(el => el.addEventListener('input', updatePayButton));
+
+  // ====== Submit payment ======
+  document.getElementById('payment-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!stripe) {
+      document.getElementById('card-errors').textContent = 'Payment system not loaded. Please refresh.';
+      return;
+    }
+
+    clearFieldErrors();
+    let valid = true;
+    if (nameEl.value.trim().length < 2) {
+      nameEl.classList.add('error');
+      document.getElementById('err-name').classList.add('visible'); valid = false;
+    }
+    if (!isValidEmail(emailEl.value)) {
+      emailEl.classList.add('error');
+      document.getElementById('err-email').classList.add('visible'); valid = false;
+    }
+    if (!isValidPhone(phoneEl.value)) {
+      phoneEl.classList.add('error');
+      document.getElementById('err-phone').classList.add('visible'); valid = false;
+    }
+    if (!valid) return;
+
+    payBtn.disabled = true;
+    payBtn.classList.add('loading');
+
+    try {
+      const intentRes = await fetch('/api/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cart.map(i => ({ packageId: i.packageId, dates: i.dates })),
+          customerName: nameEl.value.trim(),
+          customerEmail: emailEl.value.trim(),
+          customerPhone: phoneEl.value.trim(),
+        }),
+      });
+      if (!intentRes.ok) {
+        const errData = await intentRes.json().catch(() => ({}));
+        throw new Error(errData.error || 'Could not create payment.');
+      }
+      const { clientSecret } = await intentRes.json();
+
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: nameEl.value.trim(),
+            email: emailEl.value.trim(),
+            phone: phoneEl.value.trim(),
+          },
+        },
+        receipt_email: emailEl.value.trim(),
+      });
+      if (result.error) {
+        document.getElementById('card-errors').textContent = result.error.message;
+        payBtn.classList.remove('loading');
+        payBtn.disabled = false;
+        return;
+      }
+      if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+        document.getElementById('success-name').textContent = nameEl.value.trim().split(' ')[0];
+        document.getElementById('success-email').textContent = emailEl.value.trim();
+        const seats = cart.reduce((s, i) => s + i.dates.length, 0);
+        document.getElementById('success-title').textContent = seats > 1 ? "You're all booked!" : "You're booked!";
+        // Clear cart (booking is locked in server-side; we don't want re-submit)
+        cart = [];
+        saveCart();
+        renderCartButton();
+        openModal('success');
+      }
+    } catch (err) {
+      document.getElementById('card-errors').textContent = err.message || 'Something went wrong. Please try again or contact us.';
+      payBtn.classList.remove('loading');
+      payBtn.disabled = false;
+    }
+  });
+  document.getElementById('success-close').addEventListener('click', () => {
+    closeModal();
+    // Reset to a fresh state for next visit
+    showPanel('date-picker');
+  });
+
+  // ====== Waitlist ======
+  let waitlistContext = null; // { packageId, date }
+  function openWaitlist(date) {
+    waitlistContext = { packageId: currentPackageId, date };
+    const pkg = PACKAGES[currentPackageId];
+    const { day, md } = formatDate(date);
+    document.getElementById('wl-title').textContent = `${day}, ${md} is full`;
+    document.getElementById('wl-sub').textContent = pkg.name + ' · ' + pkg.modeLabel;
+    document.getElementById('waitlist-form').reset();
+    document.querySelectorAll('#waitlist-form .error-msg').forEach(el => el.classList.remove('visible'));
+    openModal('waitlist');
+    setTimeout(() => document.getElementById('wl-name').focus(), 50);
+  }
+  document.getElementById('wl-cancel').addEventListener('click', () => {
+    // Return to date picker if we came from it
+    if (currentPackageId) {
+      openModal('date-picker');
+    } else {
+      closeModal();
+    }
+  });
+  document.getElementById('waitlist-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('wl-name').value.trim();
+    const email = document.getElementById('wl-email').value.trim();
+    const phone = document.getElementById('wl-phone').value.trim();
+    let valid = true;
+    document.querySelectorAll('#waitlist-form .error-msg').forEach(el => el.classList.remove('visible'));
+    if (name.length < 2) { document.getElementById('wl-err-name').classList.add('visible'); valid = false; }
+    if (!isValidEmail(email)) { document.getElementById('wl-err-email').classList.add('visible'); valid = false; }
+    if (!isValidPhone(phone)) { document.getElementById('wl-err-phone').classList.add('visible'); valid = false; }
+    if (!valid) return;
+
+    const submitBtn = document.getElementById('wl-submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+    try {
+      await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageId: waitlistContext.packageId,
+          date: waitlistContext.date,
+          name, email, phone,
+        }),
+      });
+    } catch {}
+    // Show success either way (don't expose server errors to user)
+    document.getElementById('success-title').textContent = "You're on the list.";
+    const { day, md } = formatDate(waitlistContext.date);
+    document.getElementById('success-msg').innerHTML = `Thanks, <strong>${escapeHtml(name.split(' ')[0])}</strong>. We'll personally reach out at <strong>${escapeHtml(email)}</strong> if a spot opens up for <strong>${day}, ${md}</strong>.`;
+    openModal('success');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Join Waitlist';
+  });
+
+  // ====== Helpers ======
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+</script>
+</body>
+</html>

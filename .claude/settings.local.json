@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(py --version)",
+      "Bash(py -3 --version)",
+      "Bash(py -c ' *)"
+    ]
+  }
+}
