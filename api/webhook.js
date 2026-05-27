@@ -28,16 +28,17 @@ function rehydrateCartItem(raw) {
   if (!pid || !Array.isArray(dates) || dates.length === 0) return null;
   const pkg = PACKAGES[pid];
   if (!pkg) return null;
+  // Use the actually-charged amount (raw.a) if present; fall back to the local
+  // PACKAGES table for legacy carts that didn't include it.
+  const amt = Number.isFinite(Number(raw.a)) ? Number(raw.a) : pkg.amount;
   return {
     pid,
     name: pkg.name,
     mode: pkg.mode,
     dates,
-    amt: pkg.amount,
+    amt,
   };
 }
-
-module.exports.config = { api: { bodyParser: false } };
 
 function readRawBody(req) {
   return new Promise((resolve, reject) => {
@@ -93,10 +94,34 @@ module.exports = async (req, res) => {
     return res.status(200).json({ received: true });
   }
 
-  // Store booking records keyed by class date+mode so Jonathan/Alex can see attendance
-  const kvAvailable = !!((process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL) && (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN));
-  if (kvAvailable) {
-    const redis = new Redis({ url: (process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL), token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN) });
+  // Store booking records keyed by class date+mode so Jonathan/Alex can see attendance.
+  // Also gate the whole side-effecting block behind a per-PI lock so Stripe webhook
+  // retries (after a timeout) don't double-record bookings or send duplicate emails.
+  const kvAvailable = !!((process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || process.env.CRON_SECRET_KV_REST_API_URL) && (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN));
+  const redis = kvAvailable ? new Redis({ url: (process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || process.env.CRON_SECRET_KV_REST_API_URL), token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN) }) : null;
+
+  // Idempotency: gate side effects behind a per-PI lock so Stripe retries don't
+  // double-process. The initial TTL matches the Vercel max function duration
+  // (60s in vercel.json) — if the function is killed by Vercel's timeout, the
+  // lock expires at the same moment so a Stripe retry can pick it up. On
+  // successful completion we extend the TTL to 7 days so any later out-of-spec
+  // retries are silently dropped as duplicates.
+  const lockKey = `webhook_done:${pi.id}`;
+  if (redis) {
+    let firstTime;
+    try {
+      firstTime = await redis.set(lockKey, new Date().toISOString(), { nx: true, ex: 60 });
+    } catch (e) {
+      console.error('Idempotency lock failed (proceeding without it):', e);
+      firstTime = true;
+    }
+    if (!firstTime) {
+      console.log('Webhook already processed (or in-flight) for', pi.id, '— skipping duplicate.');
+      return res.status(200).json({ received: true, duplicate: true });
+    }
+  }
+
+  if (redis) {
     const emailKey = `email_index:${customerEmail.toLowerCase()}`;
     for (const item of cart) {
       for (const date of item.dates) {
@@ -104,6 +129,24 @@ module.exports = async (req, res) => {
         // 2-day package lands in the Zoom list (matches capacity + auto-cancel).
         const dow = new Date(date + 'T00:00:00Z').getUTCDay();
         const dateMode = dow === 2 ? 'inperson' : (dow === 3 ? 'zoom' : item.mode);
+
+        // Inside the loop for (const date of item.dates) {
+        const isCancelled = await redis.get(`cancelled:${date}:${dateMode}`);
+if (isCancelled) {
+        // The class was auto-cancelled while they were on the checkout page.
+        // Automatically issue an immediate refund for this specific item.
+          try {
+            await stripe.refunds.create({
+              payment_intent: pi.id,
+              amount: Math.round(item.amt / (item.dates.length || 1)), // <-- FIX: Refund only the per-class portion
+              reason: 'requested_by_customer',
+              metadata: { reason_internal: 'auto_cancelled_during_checkout', class_date: date }
+            });
+          } catch (e) {
+            console.error('Immediate refund failed for cancelled class:', e);
+          }
+          continue; // Skip adding them to the booking list for the cancelled class
+        }
         const bookingId = crypto.randomUUID();
         const record = {
           bookingId,
@@ -132,6 +175,7 @@ module.exports = async (req, res) => {
   // Send branded confirmation email
   if (!process.env.RESEND_API_KEY) {
     console.warn('RESEND_API_KEY not set — skipping branded email.');
+    if (redis) { try { await redis.expire(lockKey, 7 * 24 * 60 * 60); } catch {} }
     return res.status(200).json({ received: true });
   }
   const resend = new Resend(process.env.RESEND_API_KEY);
@@ -154,8 +198,8 @@ module.exports = async (req, res) => {
         : 'https://dna1575-deploy.vercel.app');
   const cancelUrl = `${siteOrigin.replace(/\/$/, '')}/cancel.html`;
 
-  const html = renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, customerName, cancelUrl });
-  const text = renderEmailText({ firstName, cart, amountPaid, customerName, cancelUrl });
+  const html = renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, cancelUrl });
+  const text = renderEmailText({ firstName, cart, amountPaid, cancelUrl });
 
   try {
     await resend.emails.send({
@@ -171,6 +215,10 @@ module.exports = async (req, res) => {
     console.error('Resend send error:', err);
   }
 
+  // Mark as fully processed — extend the in-flight lock from 60s to 7 days
+  // so any future out-of-spec retries from Stripe are silently dropped.
+  if (redis) { try { await redis.expire(lockKey, 7 * 24 * 60 * 60); } catch {} }
+
   return res.status(200).json({ received: true });
 };
 
@@ -180,7 +228,7 @@ function formatDateNice(iso) {
   return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
-function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, customerName, cancelUrl }) {
+function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, cancelUrl }) {
   const itemBlocks = cart.map(item => {
     const dateRows = item.dates.map(d => `
       <tr><td style="padding:8px 0;color:#1a2845;font-size:14px;">${formatDateNice(d)}</td></tr>
@@ -292,7 +340,7 @@ function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, cu
 </body></html>`;
 }
 
-function renderEmailText({ firstName, cart, amountPaid, customerName, cancelUrl }) {
+function renderEmailText({ firstName, cart, amountPaid, cancelUrl }) {
   const lines = [`You're booked, ${firstName}.`, '', 'Thanks for reserving with DNA1575.', ''];
   for (const item of cart) {
     lines.push(`PACKAGE: ${item.name}`);
@@ -324,3 +372,8 @@ function renderEmailText({ firstName, cart, amountPaid, customerName, cancelUrl 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
+// MUST come AFTER `module.exports = ...` above — Vercel reads this property to
+// disable the default body parser so we can verify Stripe's signature on the
+// raw bytes. If you assign module.exports = before this, the property is lost.
+module.exports.config = { api: { bodyParser: false } };

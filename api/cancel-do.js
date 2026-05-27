@@ -11,8 +11,8 @@ const { Resend } = require('resend');
 const CLASS_START_UTC_HOUR = 14;
 
 function redisClient() {
-  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN;
+  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || process.env.CRON_SECRET_KV_REST_API_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN;
   if (!url || !token) return null;
   return new Redis({ url, token });
 }

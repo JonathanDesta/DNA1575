@@ -260,6 +260,12 @@
     border-top-color: var(--paper);
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
+    vertical-align: -2px;
+  }
+  /* Darker spinner when shown on light backgrounds (e.g. .alert-info status). */
+  .alert .spinner {
+    border: 2px solid rgba(26,40,69,0.2);
+    border-top-color: var(--navy);
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 

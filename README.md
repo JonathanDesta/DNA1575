@@ -7,13 +7,20 @@ Full setup takes ~75-100 minutes. Stripe verification runs in parallel and can t
 ```
 dna1575-deploy/
 ├── public/                       Static site
-│   ├── index.html                Site with cart, date picker, multi-item checkout
+│   ├── index.html                Main site — cart, date picker, multi-item checkout
+│   ├── onboarding.html           Post-booking student intake form
+│   ├── cancel.html               Self-service cancel/reschedule (magic-link auth)
 │   └── assets/                   Logo, headshots, score strips, favicons, OG image
 ├── api/                          Vercel serverless functions
-│   ├── create-payment-intent.js  Multi-item checkout — validates cart, reserves seats, charges
-│   ├── availability.js           Returns seat counts per date for the date picker
-│   ├── waitlist.js               Records waitlist entries + emails Jonathan & Alex
-│   └── webhook.js                After payment, sends branded confirmation email
+│   ├── create-payment-intent.js  Cart validation, capacity reservation, Stripe PaymentIntent
+│   ├── availability.js           Per-date seat counts + cancellation flags
+│   ├── waitlist.js               Waitlist entry storage + email Jonathan & Alex
+│   ├── webhook.js                Post-payment booking record + branded confirmation email
+│   ├── cron-cancel.js            Daily cron: auto-cancel under-enrolled classes + refund
+│   ├── cancel-request.js         POST email → emails a magic link to manage bookings
+│   ├── cancel-lookup.js          GET ?token=… → returns the customer's upcoming bookings
+│   ├── cancel-do.js              POST → self-serve cancellation + per-policy refund
+│   └── cancel-reschedule.js      POST → atomic move to a different date
 ├── package.json
 ├── vercel.json
 ├── .env.example
@@ -21,13 +28,18 @@ dna1575-deploy/
 └── README.md
 ```
 
-## What's new in v2
+## What's new in v3
 
+- **Class of 3** — single small-group format (Tuesdays in-person, Wednesdays Zoom)
+- **Summer sale prices** — in-person two-day $545, in-person one-day $349, Zoom two-day $299, Zoom one-day $199
 - **Real shopping cart** — students can pick multiple classes and check out once
-- **Date picker** — only shows dates in the next 14 days; expands as time moves forward
-- **Live capacity tracking** — backed by Vercel KV; classes show "N seats left"; full classes show waitlist
+- **Date picker** — shows dates in the next 14 days starting June 1, 2026
+- **Live capacity tracking** — backed by Upstash Redis (Vercel-managed KV); classes show "N seats left"; full classes show waitlist
 - **Waitlist** — name/email/phone capture; you and Alex get emailed when someone joins
-- **Class of 10 hidden** — only Class of 6 is offered until you decide to expand
+- **Mixed-mode 2-day** — the in-person 2-day package can swap one date for a Wednesday Zoom
+- **Self-service cancellations & reschedules** — `/cancel.html` with magic-link auth, refunds via Stripe per the 72h/48h policy
+- **Auto-cancellation** — daily cron checks each class ~24h before start; if fewer than 3 students, refunds everyone and emails them
+- **Onboarding form** — student intake form at `/onboarding.html`
 - **Favicon + Open Graph preview** — bookmarks and social shares look right
 - **Server-side prices** — even if someone tampers with the displayed price, the server bills the real amount
 
@@ -94,8 +106,10 @@ vercel env add RESEND_API_KEY           # paste re_...
 vercel env add MAIL_FROM                # paste: DNA1575 <hello@dna1575.com>
 vercel env add MAIL_REPLY_TO            # paste: dna1575prep@gmail.com
 vercel env add MAIL_CC_INTERNAL         # paste: jdjonathandesta@gmail.com,alex.alexandrov734@gmail.com
+vercel env add CRON_SECRET              # paste a long random string (openssl rand -hex 32)
+vercel env add SITE_URL                 # paste your live origin, e.g. https://dna1575.com (optional)
 ```
-For each: select **Production**, **Preview**, **Development** (all three).
+For each: select **Production**, **Preview**, **Development** (all three) — except `STRIPE_SECRET_KEY` which Vercel marks sensitive (Production + Preview only).
 
 Then redeploy: `vercel --prod`
 
@@ -148,7 +162,7 @@ Then redeploy: `vercel --prod`
 - **Live attendance for a class**: lookup `cap:inperson:2026-06-02` (an integer 0–6). If it equals 6, the class is full.
 
 ### See the waitlist
-Vercel KV: keys like `waitlist:2026-06-02:inperson-6-1day` contain a list of waitlist entries. You'll also have received an email at the time they joined.
+Vercel KV: keys like `waitlist:2026-06-02:inperson-3-1day` contain a list of waitlist entries. You'll also have received an email at the time they joined.
 
 ### Manually adjust capacity (rare — refunds, manual cancellations)
 If you refund someone in Stripe, the seat is NOT automatically released. To release a seat:
@@ -162,17 +176,28 @@ If you refund someone in Stripe, the seat is NOT automatically released. To rele
 
 If these don't match, the server amount wins (Stripe will charge what the server says).
 
-### Add Class of 10 back when ready
-In `public/index.html`, search for the pricing-grid `<div>`s. Add Class of 10 cards above the Class of 6 cards. The `data-package` attribute needs new IDs like `inperson-10-1day`. Then update:
+### Add a new package size or format
+In `public/index.html`, search for the pricing-grid `<div>`s. Add new cards with a new `data-package` ID like `inperson-6-1day`. Then update everywhere the package list is duplicated:
 - `PACKAGES` in `public/index.html` (frontend display)
-- `PACKAGES` in `api/create-payment-intent.js` (server-side validation + amounts)
-- The capacity constant (`MAX_CAPACITY = 6`) needs to become per-package if Class of 10 caps at 10 — currently single constant. Easiest: rename the KV key to include package size (e.g. `cap:inperson-6:2026-06-02` vs `cap:inperson-10:...`).
+- `PACKAGES` in `api/create-payment-intent.js` (server validation + amounts)
+- `PACKAGES` in `api/webhook.js` (cart-from-Stripe rehydration)
+- `PACKAGE_LABEL` in `api/waitlist.js` (waitlist email label)
+- `validDaysForPackage()` in both `api/cancel-lookup.js` and `api/cancel-reschedule.js` (allowed-day rules for reschedule)
+- `MAX_CAPACITY` (currently 6 = two parallel groups of 3) — only change if the room or instructor setup actually changes.
 
 ### Extend the booking window past 14 days
-Edit `BOOKING_WINDOW_DAYS` in three places (it's deliberately not a shared config):
+Edit `BOOKING_WINDOW_DAYS` in four places (deliberately not a shared config):
 - `public/index.html` (frontend)
 - `api/create-payment-intent.js` (server validation)
 - `api/availability.js` (date generation)
+- `api/cancel-reschedule.js` (new-date validation)
+
+### Update the class start time (e.g. DST changeover)
+The system hardcodes 10:00 AM Atlanta local = 14:00 UTC, assuming EDT (UTC-4). When Atlanta switches to EST (UTC-5) in November, change `CLASS_START_UTC_HOUR` from 14 → 15 in:
+- `api/cron-cancel.js`
+- `api/cancel-do.js`
+- `api/cancel-lookup.js`
+- `api/cancel-reschedule.js`
 
 ---
 
@@ -188,9 +213,9 @@ Edit `BOOKING_WINDOW_DAYS` in three places (it's deliberately not a shared confi
 
 ## Limits / known issues
 
-- **No timezone handling.** Class times "4:00–8:00 PM" are assumed to be local to Atlanta. If you book a Zoom student in another timezone, they'll need to do the math.
+- **No timezone handling.** Class times "10:00 AM – 2:00 PM" are assumed to be local to Atlanta (EDT). If you book a Zoom student in another timezone, they'll need to do the math. When Atlanta switches to EST (November), update `CLASS_START_UTC_HOUR` (see operations note above).
 - **No double-book prevention.** A student can book the same date twice (e.g. single-day on Tue and 2-day starting Tue). Each booking takes a separate seat. Worth a manual check before each class.
-- **Refunds don't auto-release seats.** See "Manually adjust capacity" above.
+- **Manual Stripe-dashboard refunds don't auto-release seats.** Self-service cancellations through `/cancel.html` and auto-cancellations from the cron DO release seats. But if you refund someone directly from Stripe's dashboard, the KV capacity counter stays incremented. See "Manually adjust capacity" above.
 - **Same student paying twice for the same class** isn't detected. Stripe and KV both treat them as two separate bookings.
 - **No mobile hamburger menu.** Nav links hide on mobile; only "Reserve Seat" is shown. Page scrolls fine.
 

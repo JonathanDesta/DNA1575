@@ -44,14 +44,14 @@ module.exports = async (req, res) => {
     return res.status(200).json({ classes: result, mode });
   }
 
-  const kvAvailable = !!((process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL) && (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN));
+  const kvAvailable = !!((process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || process.env.CRON_SECRET_KV_REST_API_URL) && (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN));
   if (!kvAvailable) {
     // No KV — return all dates as 0 booked, none cancelled
     offered.forEach(d => { result[d] = { booked: 0, cancelled: false }; });
     return res.status(200).json({ classes: result, mode });
   }
 
-  const redis = new Redis({ url: (process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL), token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN) });
+  const redis = new Redis({ url: (process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || process.env.CRON_SECRET_KV_REST_API_URL), token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN) });
 
   try {
     // Fetch both capacity counters AND cancelled flags in one pipelined call.

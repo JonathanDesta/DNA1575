@@ -13,9 +13,13 @@
 // window so we never cancel one that's already inside the 48h policy lock
 // (e.g. today's class when cron fires just hours before it starts).
 //
-// Idempotency: we acquire a per-(date, mode) lock in KV before touching anything.
-// If the lock already exists, this run is a no-op for that class. The lock is
-// never released, so a class can only ever be auto-cancelled once.
+// Idempotency uses two KV keys per (date, mode):
+//   cancel_lock:<date>:<mode>   — short-lived (5min) mutex held only while a single
+//                                  run is evaluating this class. Auto-expires if the
+//                                  run dies; deleted on completion.
+//   cancelled:<date>:<mode>     — permanent flag set only when we COMMIT a cancellation.
+//                                  Frontend and other API endpoints read this to know
+//                                  the class is gone. We short-circuit if it's already set.
 //
 // Class start time: 10:00 AM Atlanta local time. Atlanta is on EDT (UTC-4)
 // during the operational months (June onward). If you extend into Nov–Mar
@@ -62,11 +66,11 @@ module.exports = async (req, res) => {
   // Reject anything else so this endpoint can't be hit publicly.
   const expected = process.env.CRON_SECRET;
   if (expected) {
-    const got = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+    const got = ((req.headers && req.headers.authorization) || '').replace(/^Bearer\s+/i, '');
     if (got !== expected) return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  if (!(process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL) || !(process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN)) {
+  if (!(process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || process.env.CRON_SECRET_KV_REST_API_URL) || !(process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN)) {
     return res.status(500).json({ error: 'KV not configured' });
   }
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -74,8 +78,8 @@ module.exports = async (req, res) => {
   }
 
   const redis = new Redis({
-    url: (process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL),
-    token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN),
+    url: (process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || process.env.CRON_SECRET_KV_REST_API_URL),
+    token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN),
   });
   const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
   const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -88,14 +92,34 @@ module.exports = async (req, res) => {
   const summary = [];
 
   for (const cls of upcoming) {
-    const lockKey = `cancelled:${cls.iso}:${cls.mode}`;
-    // Atomic lock: if already cancelled, skip.
-    let acquired;
+    // Two separate keys:
+    //   `cancel_lock:<date>:<mode>`  — short-lived mutex while we evaluate the class
+    //   `cancelled:<date>:<mode>`    — permanent public flag, set only if we actually cancel
+    // Keeping them separate prevents the frontend from briefly showing a class as
+    // cancelled while the cron is mid-check on a class that will end up being kept.
+    const evalLockKey = `cancel_lock:${cls.iso}:${cls.mode}`;
+    const cancelKey   = `cancelled:${cls.iso}:${cls.mode}`;
+
+    // Short-circuit if already cancelled in a prior run.
+    let alreadyCancelled = false;
+    try { alreadyCancelled = !!(await redis.get(cancelKey)); } catch {}
+    if (alreadyCancelled) {
+      summary.push({ ...cls, action: 'already-cancelled' });
+      continue;
+    }
+
+    // Acquire eval mutex with 5-minute TTL (auto-releases if this run dies).
+    let evalAcquired;
     try {
-      acquired = await redis.set(lockKey, new Date().toISOString(), { nx: true });
+      evalAcquired = await redis.set(evalLockKey, new Date().toISOString(), { nx: true, ex: 300 });
     } catch (e) {
       console.error('lock error', cls, e);
       summary.push({ ...cls, action: 'error-lock' });
+      continue;
+    }
+    if (!evalAcquired) {
+      // Another cron run is currently evaluating — skip and let it finish.
+      summary.push({ ...cls, action: 'already-in-flight' });
       continue;
     }
 
@@ -106,8 +130,7 @@ module.exports = async (req, res) => {
     } catch (e) {
       console.error('bookings read error', cls, e);
       summary.push({ ...cls, action: 'error-read' });
-      // Release the lock so a later run can retry
-      if (acquired) { try { await redis.del(lockKey); } catch {} }
+      try { await redis.del(evalLockKey); } catch {}
       continue;
     }
     const allRecords = raw.map(b => { try { return typeof b === 'string' ? JSON.parse(b) : b; } catch { return null; } }).filter(Boolean);
@@ -128,27 +151,55 @@ module.exports = async (req, res) => {
     const enrolled = bookings.length;
 
     if (enrolled >= MIN_ENROLLMENT) {
-      // Class will run as planned. Release the speculative lock.
-      if (acquired) { try { await redis.del(lockKey); } catch {} }
+      // Class will run as planned. Release the eval mutex.
+      try { await redis.del(evalLockKey); } catch {}
       summary.push({ ...cls, action: 'kept', enrolled });
       continue;
     }
 
-    if (!acquired) {
-      // Already cancelled in a prior run.
-      summary.push({ ...cls, action: 'already-cancelled', enrolled });
+    // Commit the public cancellation flag (permanent, no TTL).
+    try {
+      await redis.set(cancelKey, new Date().toISOString());
+    } catch (e) {
+      console.error('Could not set cancelled flag — aborting cancellation', cls, e);
+      try { await redis.del(evalLockKey); } catch {}
+      summary.push({ ...cls, action: 'error-commit' });
       continue;
+    }
+
+    // Re-read the bookings list AFTER setting cancelKey. This catches any late
+    // arrivals that landed in the brief window between our initial read and
+    // the cancelKey set — they would now be blocked from future bookings by
+    // create-payment-intent's cancelKey check, but we still need to refund the
+    // ones that already paid.
+    let finalRecords = bookings;
+    try {
+      const raw2 = await redis.lrange(`bookings:${cls.iso}:${cls.mode}`, 0, -1) || [];
+      const all2 = raw2.map(b => { try { return typeof b === 'string' ? JSON.parse(b) : b; } catch { return null; } }).filter(Boolean);
+      // Re-fetch booking_cancelled flags so self-cancelled bookings still get excluded.
+      const ids2 = all2.map(r => r.bookingId).filter(Boolean);
+      const cancelledSet2 = new Set();
+      if (ids2.length) {
+        try {
+          const flags2 = await redis.mget(...ids2.map(id => `booking_cancelled:${id}`));
+          ids2.forEach((id, i) => { if (flags2[i]) cancelledSet2.add(id); });
+        } catch {}
+      }
+      finalRecords = all2.filter(r => !r.bookingId || !cancelledSet2.has(r.bookingId));
+    } catch (e) {
+      console.error('cron re-read failed (using initial booking list)', e);
     }
 
     // Process the cancellation.
     const refundResults = [];
     const emailResults = [];
-    for (const b of bookings) {
+    for (const b of finalRecords) {
       // Per-class refund = the package's price divided by its session count.
       const sessions = Number(b.packageSessions) || 1;
-      const pkgAmount = Number(b.packageAmountCents) || Number(b.amountPaidCents) || 0;
+      const pkgAmount = Number(b.packageAmountCents) || 0;
       const refundCents = Math.max(0, Math.round(pkgAmount / sessions));
 
+      let refundOk = false;
       try {
         const refund = await stripe.refunds.create({
           payment_intent: b.paymentIntentId,
@@ -162,6 +213,7 @@ module.exports = async (req, res) => {
           },
         });
         refundResults.push({ email: b.customerEmail, refundCents, refundId: refund.id, ok: true });
+        refundOk = true;
       } catch (e) {
         console.error('Refund failed', { date: cls.iso, mode: cls.mode, pi: b.paymentIntentId, err: e.message });
         refundResults.push({ email: b.customerEmail, refundCents, ok: false, error: e.message });
@@ -169,19 +221,24 @@ module.exports = async (req, res) => {
 
       if (resend && b.customerEmail) {
         const refundDollars = (refundCents / 100).toFixed(2);
+        // Subject + content adapt to whether the refund actually went through.
+        const subject = refundOk
+          ? `Class cancelled — ${formatDateNice(cls.iso)} — $${refundDollars} refund issued`
+          : `Class cancelled — ${formatDateNice(cls.iso)} — refund pending manual processing`;
         try {
           await resend.emails.send({
             from: fromAddress,
             to: b.customerEmail,
             cc: ccInternal ? ccInternal.split(',').map(s => s.trim()).filter(Boolean) : undefined,
             reply_to: replyTo,
-            subject: `Class cancelled — ${formatDateNice(cls.iso)} — $${refundDollars} refund issued`,
+            subject,
             html: renderCancellationHtml({
               firstName: (b.customerName || 'there').split(' ')[0],
               classDate: cls.iso,
               classMode: cls.mode,
               refundDollars,
               packageName: b.packageName || 'your class',
+              refundOk,
             }),
             text: renderCancellationText({
               firstName: (b.customerName || 'there').split(' ')[0],
@@ -189,6 +246,7 @@ module.exports = async (req, res) => {
               classMode: cls.mode,
               refundDollars,
               packageName: b.packageName || 'your class',
+              refundOk,
             }),
           });
           emailResults.push({ email: b.customerEmail, ok: true });
@@ -199,10 +257,12 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Also zero out the capacity counter so the date frees up for future use
-    // (won't actually re-open since it's in the past by the time anyone sees it,
-    // but keeps the KV tidy).
+    // Zero out the capacity counter for tidiness. The class won't actually
+    // accept new bookings (the cancelKey set above blocks them and the
+    // frontend filters cancelled dates out of the picker entirely).
     try { await redis.del(`cap:${cls.mode}:${cls.iso}`); } catch {}
+    // Release the eval mutex (the permanent cancelKey is what blocks future runs).
+    try { await redis.del(evalLockKey); } catch {}
 
     summary.push({
       ...cls,
@@ -226,8 +286,15 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
-function renderCancellationHtml({ firstName, classDate, classMode, refundDollars, packageName }) {
+function renderCancellationHtml({ firstName, classDate, classMode, refundDollars, packageName, refundOk = true }) {
   const modeLabel = classMode === 'inperson' ? 'In-Person · Atlanta, GA' : 'Zoom · Live nationwide';
+  const refundLabel = refundOk ? 'Refund Issued' : 'Refund Status';
+  const refundValueHtml = refundOk
+    ? `$${refundDollars}`
+    : `<span style="color:#a81e2c;">Pending — we'll process it manually within 24 hours</span>`;
+  const refundFootnote = refundOk
+    ? `Stripe normally posts refunds to your statement in 5&ndash;10 business days. You&rsquo;ll get a refund receipt from Stripe separately.`
+    : `Our automatic refund didn&rsquo;t go through &mdash; we&rsquo;ll process your $${refundDollars} refund by hand within 24 hours. No action needed on your part. Reply to this email if you want a status update.`;
   return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f7f4ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#14182a;">
@@ -262,8 +329,8 @@ function renderCancellationHtml({ firstName, classDate, classMode, refundDollars
         <tr><td style="padding:20px 32px 8px;">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size:14px;">
             <tr>
-              <td style="padding:10px 0;border-top:1px solid #d9d4c7;color:#6b6e7a;text-transform:uppercase;letter-spacing:0.1em;font-size:11px;font-weight:600;">Refund Issued</td>
-              <td style="padding:10px 0;border-top:1px solid #d9d4c7;color:#1a2845;font-weight:500;text-align:right;font-family:Georgia,serif;font-size:18px;">$${refundDollars}</td>
+              <td style="padding:10px 0;border-top:1px solid #d9d4c7;color:#6b6e7a;text-transform:uppercase;letter-spacing:0.1em;font-size:11px;font-weight:600;">${refundLabel}</td>
+              <td style="padding:10px 0;border-top:1px solid #d9d4c7;color:#1a2845;font-weight:500;text-align:right;font-family:Georgia,serif;font-size:18px;">${refundValueHtml}</td>
             </tr>
             <tr>
               <td style="padding:10px 0;border-top:1px solid #d9d4c7;color:#6b6e7a;text-transform:uppercase;letter-spacing:0.1em;font-size:11px;font-weight:600;">Method</td>
@@ -271,7 +338,7 @@ function renderCancellationHtml({ firstName, classDate, classMode, refundDollars
             </tr>
           </table>
           <p style="margin:14px 0 0;color:#6b6e7a;font-size:13px;line-height:1.6;">
-            Stripe normally posts refunds to your statement in 5&ndash;10 business days. You&rsquo;ll get a refund receipt from Stripe separately.
+            ${refundFootnote}
           </p>
         </td></tr>
 
@@ -311,8 +378,11 @@ function renderCancellationHtml({ firstName, classDate, classMode, refundDollars
 </body></html>`;
 }
 
-function renderCancellationText({ firstName, classDate, classMode, refundDollars, packageName }) {
+function renderCancellationText({ firstName, classDate, classMode, refundDollars, packageName, refundOk = true }) {
   const modeLabel = classMode === 'inperson' ? 'In-Person · Atlanta, GA' : 'Zoom · Live nationwide';
+  const refundLine = refundOk
+    ? `REFUND ISSUED: $${refundDollars} (back to your original card, 5–10 business days)`
+    : `REFUND: $${refundDollars} pending — our auto-refund failed, we'll process it manually within 24 hours`;
   return [
     `Hi ${firstName},`,
     '',
@@ -324,7 +394,7 @@ function renderCancellationText({ firstName, classDate, classMode, refundDollars
     `MODE:    ${modeLabel}`,
     `DATE:    ${formatDateNice(classDate)}`,
     '',
-    `REFUND ISSUED: $${refundDollars} (back to your original card, 5–10 business days)`,
+    refundLine,
     '',
     `Want to book a different date? Reply to this email or text us. If you booked a 2-day package and only one date got cancelled, the other date is unaffected.`,
     '',

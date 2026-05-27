@@ -41,9 +41,9 @@ module.exports = async (req, res) => {
     };
 
     // Store in KV list keyed by date for easy lookup
-    const kvAvailable = !!((process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL) && (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN));
+    const kvAvailable = !!((process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || process.env.CRON_SECRET_KV_REST_API_URL) && (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN));
     if (kvAvailable) {
-      const redis = new Redis({ url: (process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL), token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN) });
+      const redis = new Redis({ url: (process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || process.env.CRON_SECRET_KV_REST_API_URL), token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN) });
       try {
         await redis.rpush(`waitlist:${date}:${packageId}`, JSON.stringify(entry));
       } catch (e) {
@@ -57,7 +57,11 @@ module.exports = async (req, res) => {
         const resend = new Resend(process.env.RESEND_API_KEY);
         const fromAddress = process.env.MAIL_FROM || 'DNA1575 <hello@dna1575.com>';
         const ccInternal = process.env.MAIL_CC_INTERNAL || '';
-        const toAddresses = ccInternal.split(',').map(s => s.trim()).filter(Boolean);
+        const fallbackTo = process.env.MAIL_REPLY_TO || 'dna1575prep@gmail.com';
+        
+        let toAddresses = ccInternal.split(',').map(s => s.trim()).filter(Boolean);
+        if (toAddresses.length === 0) toAddresses = [fallbackTo]; // <-- FIX: Ensure there is always a recipient
+
         if (toAddresses.length) {
           await resend.emails.send({
             from: fromAddress,

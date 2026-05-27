@@ -838,20 +838,28 @@
     });
 
     try {
-      await fetch('https://formspree.io/f/xaqkekgr', {
+      const res = await fetch('https://formspree.io/f/xaqkekgr', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(data),
       });
-    } catch {
-      // still show success
-    }
+      if (!res.ok) throw new Error('Formspree rejected the submission');
+      
+      document.getElementById('success-name').textContent = name.split(' ')[0];
+      document.getElementById('onboarding-form').style.display = 'none';
+      document.getElementById('success-overlay').classList.add('visible');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    document.getElementById('success-name').textContent = name.split(' ')[0];
-    document.getElementById('onboarding-form').style.display = 'none';
-    document.getElementById('success-overlay').classList.add('visible');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
+    } catch (err) {
+      // --- NEW ERROR HANDLING FIX ---
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      errEl.textContent = "Something went wrong sending the form. Please email us your answers directly.";
+      errEl.classList.add('visible');
+      document.getElementById('s8').scrollIntoView({ behavior: 'smooth' });
+      // --- END FIX ---
+    }
+  }); // <-- ADDED MISSING CLOSURE
 </script>
 </body>
 </html>

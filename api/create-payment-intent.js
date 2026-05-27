@@ -95,6 +95,15 @@ module.exports = async (req, res) => {
       validated.push({ packageId: item.packageId, pkg, dates: item.dates });
     }
 
+    // Build the Stripe metadata cart JSON up-front so we can fail-fast on overflow
+    // BEFORE we reserve any capacity. (Reserving first would briefly hold seats and
+    // could falsely tell concurrent buyers "sold out".)
+    const cartJson = JSON.stringify(validated.map(v => ({ pid: v.packageId, d: v.dates, a: v.pkg.amount })));
+    if (cartJson.length > 490) {
+      console.error('Cart metadata too large:', cartJson.length, 'chars');
+      return res.status(400).json({ error: 'Cart is too large. Please split into separate orders or contact us.' });
+    }
+
     // Reserve seats — capacity is tracked per (actual-day-mode, date), so a
     // Tuesday booked under a "zoom-3-2day" package counts against the in-person cap.
     const allReservations = [];
@@ -106,8 +115,8 @@ module.exports = async (req, res) => {
     }
 
     const reserved = [];
-    const kvAvailable = !!((process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL) && (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN));
-    const redis = kvAvailable ? new Redis({ url: (process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL), token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN) }) : null;
+    const kvAvailable = !!((process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || process.env.CRON_SECRET_KV_REST_API_URL) && (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN));
+    const redis = kvAvailable ? new Redis({ url: (process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || process.env.CRON_SECRET_KV_REST_API_URL), token: (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN) }) : null;
 
     if (kvAvailable) {
       // First pass: reject any date that has been auto-cancelled.
@@ -150,33 +159,31 @@ module.exports = async (req, res) => {
     }
 
     const description = validated.map(v => `${v.pkg.name} (${v.dates.join(', ')})`).join(' | ');
-    // Cart in metadata uses minimal fields (Stripe limits each metadata value to
-    // 500 chars). Webhook re-derives name/mode/amount from its own PACKAGES table.
-    const cartJson = JSON.stringify(validated.map(v => ({ pid: v.packageId, d: v.dates })));
-    if (cartJson.length > 490) {
-      // Defensive: if metadata would overflow, fail loudly rather than silently
-      // truncating to malformed JSON.
-      // Undo reservations so seats aren't left held.
-      for (const back of reserved) await redis.decr(back.key).catch(() => {});
-      console.error('Cart metadata too large:', cartJson.length, 'chars');
-      return res.status(400).json({ error: 'Cart is too large. Please split into separate orders or contact us.' });
-    }
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: totalAmount,
-      currency: 'usd',
-      receipt_email: customerEmail.trim(),
-      description: `DNA1575 — ${description}`.slice(0, 350),
-      metadata: {
-        cart: cartJson,
-        customer_name: customerName.trim(),
-        customer_email: customerEmail.trim(),
-        customer_phone: customerPhone.trim(),
-        item_count: String(validated.length),
-        seat_count: String(allReservations.length),
-      },
-      automatic_payment_methods: { enabled: true },
-    });
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: totalAmount,
+        currency: 'usd',
+        receipt_email: customerEmail.trim(),
+        description: `DNA1575 — ${description}`.slice(0, 350),
+        metadata: {
+          cart: cartJson,
+          customer_name: customerName.trim(),
+          customer_email: customerEmail.trim(),
+          customer_phone: customerPhone.trim(),
+          item_count: String(validated.length),
+          seat_count: String(allReservations.length),
+        },
+        automatic_payment_methods: { enabled: true },
+      });
+    } catch (stripeErr) {
+      // Release the reservations we just made so the seats don't leak.
+      if (redis) {
+        for (const back of reserved) await redis.decr(back.key).catch(() => {});
+      }
+      throw stripeErr;
+    }
 
     return res.status(200).json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {

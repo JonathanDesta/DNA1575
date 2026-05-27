@@ -21,8 +21,8 @@ const FIRST_AVAILABLE_MS = Date.UTC(2026, 5, 1);
 const MAX_CAPACITY = 6;
 
 function redisClient() {
-  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN;
+  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || process.env.CRON_SECRET_KV_REST_API_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN;
   if (!url || !token) return null;
   return new Redis({ url, token });
 }
@@ -116,6 +116,19 @@ module.exports = async (req, res) => {
       return res.status(409).json({ error: 'That class is no longer available.' });
     }
 
+    // --- NEW DOUBLE-BOOKING FIX ---
+    const allRefs = await redis.lrange(`email_index:${email}`, 0, -1) || [];
+    for (const ref of allRefs) {
+      const [refDate, refMode, refId] = String(ref).split('|');
+      if (refDate === newDate && refId !== bookingId) {
+        const isSelfCancelled = await redis.get(`booking_cancelled:${refId}`);
+        if (!isSelfCancelled) {
+          return res.status(409).json({ error: 'You are already booked for this date on another session. Please pick a different date.' });
+        }
+      }
+    }
+    // --- END FIX ---
+
     // Acquire booking cancel lock first (idempotency for double-clicks)
     const lockOk = await redis.set(`booking_cancelled:${bookingId}`, new Date().toISOString(), { nx: true });
     if (!lockOk) return res.status(409).json({ error: 'This booking is already cancelled.' });
@@ -171,8 +184,8 @@ module.exports = async (req, res) => {
           cc: ccInternal ? ccInternal.split(',').map(s => s.trim()).filter(Boolean) : undefined,
           reply_to: replyTo,
           subject: `Rescheduled — your class is now ${formatDateNice(newDate)}`,
-          html: renderHtml({ rec, oldDate, oldMode, newDate, newMode }),
-          text: renderText({ rec, oldDate, oldMode, newDate, newMode }),
+          html: renderHtml({ rec, oldDate, newDate, newMode }),
+          text: renderText({ rec, oldDate, newDate, newMode }),
         });
       } catch (e) { console.error('Reschedule email failed:', e); }
     }
@@ -184,7 +197,7 @@ module.exports = async (req, res) => {
   }
 };
 
-function renderHtml({ rec, oldDate, oldMode, newDate, newMode }) {
+function renderHtml({ rec, oldDate, newDate, newMode }) {
   const modeLabel = newMode === 'inperson' ? 'In-Person · Atlanta, GA' : 'Zoom · Live nationwide';
   return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f7f4ee;font-family:-apple-system,Helvetica,Arial,sans-serif;color:#14182a;">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f7f4ee;padding:32px 16px;"><tr><td align="center">

@@ -10,8 +10,8 @@ const { Redis } = require('@upstash/redis');
 const CLASS_START_UTC_HOUR = 14; // 10 AM EDT
 
 function redisClient() {
-  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN;
+  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || process.env.CRON_SECRET_KV_REST_API_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN;
   if (!url || !token) return null;
   return new Redis({ url, token });
 }
@@ -93,8 +93,11 @@ module.exports = async (req, res) => {
   const nowMs = Date.now();
   const out = [];
 
-  for (const [key, ids] of byList.entries()) {
+  for (const [key, rawIds] of byList.entries()) {
     const [date, mode] = key.split('|');
+    // Dedupe booking IDs so a corrupted email_index with duplicate refs doesn't
+    // surface the same booking twice in the UI.
+    const ids = [...new Set(rawIds)];
     // Skip whole-class cancellations transparently
     let classCancelled = false;
     try {

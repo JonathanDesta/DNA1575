@@ -2191,7 +2191,10 @@
   function loadCart() {
     try {
       const raw = sessionStorage.getItem('dna1575_cart');
-      return raw ? JSON.parse(raw) : [];
+      const parsed = raw ? JSON.parse(raw) : [];
+      // Defensive: drop any items whose packageId no longer exists in PACKAGES
+      // (e.g. after a package rename / removal) so renderCart doesn't crash.
+      return Array.isArray(parsed) ? parsed.filter(i => i && PACKAGES[i.packageId]) : [];
     } catch { return []; }
   }
   function saveCart() {
@@ -2596,6 +2599,9 @@
         cart = [];
         saveCart();
         renderCartButton();
+        // Clear sensitive card details from the Stripe Element so the next
+        // checkout (e.g. a friend on the same browser) doesn't see the prior card.
+        if (cardElement) { try { cardElement.clear(); } catch {} }
         openModal('success');
       }
     } catch (err) {
@@ -2606,10 +2612,15 @@
   });
   document.getElementById('success-close').addEventListener('click', () => {
     closeModal();
+    // --- NEW STALE STATE FIX ---
+    currentPackageId = null;
+    selectedDates = [];
+    document.querySelectorAll('.dp-date').forEach(el => el.classList.remove('selected'));
+    // --- END FIX ---
+    
     // Reset to a fresh state for next visit
     showPanel('date-picker');
   });
-
   // ====== Waitlist ======
   let waitlistContext = null; // { packageId, date }
   function openWaitlist(date) {
