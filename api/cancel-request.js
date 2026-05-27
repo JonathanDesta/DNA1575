@@ -56,10 +56,12 @@ module.exports = async (req, res) => {
       const fromAddress = process.env.MAIL_FROM || 'DNA1575 <hello@dna1575.com>';
       const replyTo = process.env.MAIL_REPLY_TO || 'dna1575prep@gmail.com';
 
-      const origin = (req.headers && (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-host']))
-        ? `${req.headers['x-forwarded-proto']}://${req.headers['x-forwarded-host']}`
-        : 'https://dna1575-deploy.vercel.app';
-      const link = `${origin}/cancel.html?token=${token}`;
+      // Prefer SITE_URL env var, then x-forwarded headers, then hardcoded default.
+      const origin = process.env.SITE_URL
+        || ((req.headers && req.headers['x-forwarded-proto'] && req.headers['x-forwarded-host'])
+            ? `${req.headers['x-forwarded-proto']}://${req.headers['x-forwarded-host']}`
+            : 'https://dna1575-deploy.vercel.app');
+      const link = `${origin.replace(/\/$/, '')}/cancel.html?token=${token}`;
 
       try {
         await resend.emails.send({

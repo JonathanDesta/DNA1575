@@ -5,7 +5,12 @@
       "Bash(py -3 --version)",
       "Bash(py -c ' *)",
       "Bash(git fetch *)",
-      "Bash(git ls-tree *)"
+      "Bash(git ls-tree *)",
+      "Bash(node -c api/availability.js)",
+      "Bash(node -c api/cancel-do.js)",
+      "Bash(node -c api/cancel-lookup.js)",
+      "Bash(node -c api/cancel-request.js)",
+      "Bash(node -c api/cancel-reschedule.js)"
     ]
   }
 }

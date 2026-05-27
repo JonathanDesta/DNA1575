@@ -9,8 +9,9 @@
 // Timing math: cron scheduled at 13:00 UTC fires 13:00–13:59 UTC. Classes
 // start the next day at 14:00 UTC (10 AM EDT). So the cron runs 24h 1min to
 // 25h 0min before the next class — comfortably inside the "by 24 hours before"
-// rule with a small safety buffer. LOOK_AHEAD_HOURS = 26 ensures we catch
-// the class even on the latest-firing edge.
+// rule with a small safety buffer. We only act on classes in the [22h, 26h]
+// window so we never cancel one that's already inside the 48h policy lock
+// (e.g. today's class when cron fires just hours before it starts).
 //
 // Idempotency: we acquire a per-(date, mode) lock in KV before touching anything.
 // If the lock already exists, this run is a no-op for that class. The lock is
@@ -26,11 +27,12 @@ const { Redis } = require('@upstash/redis');
 
 const MIN_ENROLLMENT = 3;
 const CLASS_START_UTC_HOUR = 14; // 10:00 AM EDT = 14:00 UTC
-const LOOK_AHEAD_HOURS = 26;     // covers 24h–25h lead with cron jitter
+const MIN_LEAD_HOURS  = 22;      // never auto-cancel a class less than 22h away (would violate the 24h policy)
+const MAX_LEAD_HOURS  = 26;      // never look further than 26h ahead (next-day class window)
 const MAX_DAYS_TO_SCAN = 2;      // today + tomorrow is enough at daily cadence
 
 // Returns ISO date strings (YYYY-MM-DD, UTC) for upcoming Tuesdays/Wednesdays
-// whose start time falls inside (now, now + LOOK_AHEAD_HOURS].
+// whose start time falls inside [now + MIN_LEAD_HOURS, now + MAX_LEAD_HOURS].
 function findUpcomingClasses(nowMs) {
   const out = [];
   const today = new Date(nowMs);
@@ -45,8 +47,9 @@ function findUpcomingClasses(nowMs) {
     if (!mode) continue;
     const startMs = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), CLASS_START_UTC_HOUR, 0, 0);
     const hoursUntil = (startMs - nowMs) / (1000 * 60 * 60);
-    // Class must still be in the future, and within our lookahead window
-    if (hoursUntil > 0 && hoursUntil <= LOOK_AHEAD_HOURS) {
+    // Class must be in the [MIN_LEAD, MAX_LEAD] window so we hit the ~24h mark
+    // and never cancel a class that's already inside the 48h policy lock.
+    if (hoursUntil >= MIN_LEAD_HOURS && hoursUntil <= MAX_LEAD_HOURS) {
       const iso = d.toISOString().slice(0, 10);
       out.push({ iso, mode, startMs, hoursUntil });
     }
@@ -107,7 +110,21 @@ module.exports = async (req, res) => {
       if (acquired) { try { await redis.del(lockKey); } catch {} }
       continue;
     }
-    const bookings = raw.map(b => { try { return typeof b === 'string' ? JSON.parse(b) : b; } catch { return null; } }).filter(Boolean);
+    const allRecords = raw.map(b => { try { return typeof b === 'string' ? JSON.parse(b) : b; } catch { return null; } }).filter(Boolean);
+
+    // Exclude self-cancelled bookings — they're still in the list but no longer
+    // count toward enrollment (and shouldn't be re-refunded).
+    const cancelledSet = new Set();
+    const ids = allRecords.map(r => r.bookingId).filter(Boolean);
+    if (ids.length) {
+      try {
+        const flags = await redis.mget(...ids.map(id => `booking_cancelled:${id}`));
+        ids.forEach((id, i) => { if (flags[i]) cancelledSet.add(id); });
+      } catch (e) {
+        console.error('cron booking_cancelled mget failed', e);
+      }
+    }
+    const bookings = allRecords.filter(r => !r.bookingId || !cancelledSet.has(r.bookingId));
     const enrolled = bookings.length;
 
     if (enrolled >= MIN_ENROLLMENT) {
@@ -156,9 +173,9 @@ module.exports = async (req, res) => {
           await resend.emails.send({
             from: fromAddress,
             to: b.customerEmail,
-            cc: ccInternal ? ccInternal.split(',').map(s => s.trim()) : undefined,
+            cc: ccInternal ? ccInternal.split(',').map(s => s.trim()).filter(Boolean) : undefined,
             reply_to: replyTo,
-            subject: `Class cancelled — ${formatDateNice(cls.iso)} — full refund issued`,
+            subject: `Class cancelled — ${formatDateNice(cls.iso)} — $${refundDollars} refund issued`,
             html: renderCancellationHtml({
               firstName: (b.customerName || 'there').split(' ')[0],
               classDate: cls.iso,

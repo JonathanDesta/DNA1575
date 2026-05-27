@@ -150,13 +150,17 @@ module.exports = async (req, res) => {
     }
 
     const description = validated.map(v => `${v.pkg.name} (${v.dates.join(', ')})`).join(' | ');
-    const cartJson = JSON.stringify(validated.map(v => ({
-      pid: v.packageId,
-      name: v.pkg.name,
-      mode: v.pkg.mode,
-      dates: v.dates,
-      amt: v.pkg.amount,
-    })));
+    // Cart in metadata uses minimal fields (Stripe limits each metadata value to
+    // 500 chars). Webhook re-derives name/mode/amount from its own PACKAGES table.
+    const cartJson = JSON.stringify(validated.map(v => ({ pid: v.packageId, d: v.dates })));
+    if (cartJson.length > 490) {
+      // Defensive: if metadata would overflow, fail loudly rather than silently
+      // truncating to malformed JSON.
+      // Undo reservations so seats aren't left held.
+      for (const back of reserved) await redis.decr(back.key).catch(() => {});
+      console.error('Cart metadata too large:', cartJson.length, 'chars');
+      return res.status(400).json({ error: 'Cart is too large. Please split into separate orders or contact us.' });
+    }
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: totalAmount,
@@ -164,7 +168,7 @@ module.exports = async (req, res) => {
       receipt_email: customerEmail.trim(),
       description: `DNA1575 — ${description}`.slice(0, 350),
       metadata: {
-        cart: cartJson.slice(0, 490),
+        cart: cartJson,
         customer_name: customerName.trim(),
         customer_email: customerEmail.trim(),
         customer_phone: customerPhone.trim(),

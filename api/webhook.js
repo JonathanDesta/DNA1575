@@ -11,6 +11,32 @@ const { Resend } = require('resend');
 const { Redis } = require('@upstash/redis');
 const crypto = require('crypto');
 
+// Mirror of the server-side PACKAGES table in create-payment-intent.js.
+// Webhook receives a minimal cart (pid + dates only) in Stripe metadata and
+// rehydrates the rest from here.
+const PACKAGES = {
+  'inperson-3-1day': { name: 'Class of 3 · Single Day · In-Person',      mode: 'inperson', sessions: 1, amount: 34900 },
+  'inperson-3-2day': { name: 'Class of 3 · Two-Day Package · In-Person', mode: 'inperson', sessions: 2, amount: 54500 },
+  'zoom-3-1day':     { name: 'Class of 3 · Single Day · Zoom',           mode: 'zoom',     sessions: 1, amount: 19900 },
+  'zoom-3-2day':     { name: 'Class of 3 · Two-Day Package · Zoom',      mode: 'zoom',     sessions: 2, amount: 29900 },
+};
+
+function rehydrateCartItem(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const pid = raw.pid;
+  const dates = raw.d || raw.dates;
+  if (!pid || !Array.isArray(dates) || dates.length === 0) return null;
+  const pkg = PACKAGES[pid];
+  if (!pkg) return null;
+  return {
+    pid,
+    name: pkg.name,
+    mode: pkg.mode,
+    dates,
+    amt: pkg.amount,
+  };
+}
+
 module.exports.config = { api: { bodyParser: false } };
 
 function readRawBody(req) {
@@ -53,12 +79,14 @@ module.exports = async (req, res) => {
   const customerPhone = m.customer_phone || '';
   const amountPaid = (pi.amount / 100).toFixed(2);
 
-  let cart = [];
+  let rawCart = [];
   try {
-    cart = JSON.parse(m.cart || '[]');
+    rawCart = JSON.parse(m.cart || '[]');
   } catch {
     console.error('Failed to parse cart metadata:', m.cart);
   }
+  // Rehydrate to the full {pid, name, mode, dates, amt} shape downstream code expects.
+  const cart = rawCart.map(rehydrateCartItem).filter(Boolean);
 
   if (!customerEmail || cart.length === 0) {
     console.error('Missing customer email or empty cart on PaymentIntent:', pi.id);
@@ -112,7 +140,6 @@ module.exports = async (req, res) => {
   const ccInternal = process.env.MAIL_CC_INTERNAL || '';
 
   const firstName = customerName.split(' ')[0];
-  const itemCount = cart.length;
   const totalSeats = cart.reduce((s, i) => s + i.dates.length, 0);
   const hasInPerson = cart.some(i => i.mode === 'inperson');
   const hasZoom = cart.some(i => i.mode === 'zoom');
@@ -121,14 +148,20 @@ module.exports = async (req, res) => {
     ? `You're booked — DNA1575 SAT Prep`
     : `You're booked — ${totalSeats} classes confirmed`;
 
-  const html = renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, customerName });
-  const text = renderEmailText({ firstName, cart, amountPaid, customerName });
+  const siteOrigin = process.env.SITE_URL
+    || ((req.headers && req.headers['x-forwarded-proto'] && req.headers['x-forwarded-host'])
+        ? `${req.headers['x-forwarded-proto']}://${req.headers['x-forwarded-host']}`
+        : 'https://dna1575-deploy.vercel.app');
+  const cancelUrl = `${siteOrigin.replace(/\/$/, '')}/cancel.html`;
+
+  const html = renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, customerName, cancelUrl });
+  const text = renderEmailText({ firstName, cart, amountPaid, customerName, cancelUrl });
 
   try {
     await resend.emails.send({
       from: fromAddress,
       to: customerEmail,
-      cc: ccInternal ? ccInternal.split(',').map(s => s.trim()) : undefined,
+      cc: ccInternal ? ccInternal.split(',').map(s => s.trim()).filter(Boolean) : undefined,
       reply_to: replyTo,
       subject,
       html,
@@ -147,7 +180,7 @@ function formatDateNice(iso) {
   return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
-function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, customerName }) {
+function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, customerName, cancelUrl }) {
   const itemBlocks = cart.map(item => {
     const dateRows = item.dates.map(d => `
       <tr><td style="padding:8px 0;color:#1a2845;font-size:14px;">${formatDateNice(d)}</td></tr>
@@ -226,7 +259,7 @@ function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, cu
         <tr><td style="padding:24px 32px 8px;">
           <h2 style="font-family:Georgia,serif;font-size:18px;color:#1a2845;font-weight:500;margin:0 0 8px;">Need to cancel or reschedule?</h2>
           <p style="margin:0;color:#6b6e7a;font-size:14px;line-height:1.6;">
-            Manage your bookings yourself at <a href="https://dna1575-deploy.vercel.app/cancel.html" style="color:#a81e2c;font-weight:600;">cancel.html</a> &mdash; we'll email you a one-click link. Full refund 72+ hours out, 50% refund 48&ndash;72 hours out. For emergencies inside 48 hours, reply to this email or text us.
+            Manage your bookings yourself at <a href="${escapeHtml(cancelUrl)}" style="color:#a81e2c;font-weight:600;">${escapeHtml(cancelUrl)}</a> &mdash; we'll email you a one-click link. Full refund 72+ hours out, 50% refund 48&ndash;72 hours out. For emergencies inside 48 hours, reply to this email or text us.
           </p>
         </td></tr>
 
@@ -259,7 +292,7 @@ function renderEmailHtml({ firstName, cart, amountPaid, hasInPerson, hasZoom, cu
 </body></html>`;
 }
 
-function renderEmailText({ firstName, cart, amountPaid, customerName }) {
+function renderEmailText({ firstName, cart, amountPaid, customerName, cancelUrl }) {
   const lines = [`You're booked, ${firstName}.`, '', 'Thanks for reserving with DNA1575.', ''];
   for (const item of cart) {
     lines.push(`PACKAGE: ${item.name}`);
@@ -275,8 +308,8 @@ function renderEmailText({ firstName, cart, amountPaid, customerName }) {
   lines.push('- Pencil, paper, and a calculator');
   lines.push('- Yourself, ready to work');
   lines.push('');
-  lines.push('Need to reschedule? Reply to this email or text us.');
-  lines.push('Full refund if cancelled more than 48 hours before a class.');
+  lines.push(`Need to cancel or reschedule? ${cancelUrl}`);
+  lines.push('Full refund 72+ hrs out · 50% refund 48-72 hrs out · locked under 48 hrs.');
   lines.push('');
   lines.push('Jonathan Desta — Math (UChicago \'30)');
   lines.push('jdjonathandesta@gmail.com · (678) 558-0650');

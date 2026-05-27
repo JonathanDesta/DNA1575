@@ -110,7 +110,7 @@ module.exports = async (req, res) => {
       // Release the lock so they can retry
       try { await redis.del(`booking_cancelled:${bookingId}`); } catch {}
       console.error('Refund failed:', e);
-      return res.status(500).json({ error: 'Refund could not be processed. Please contact us — no charge was made by this attempt.' });
+      return res.status(500).json({ error: 'Refund could not be processed automatically. Please contact us and we will complete it manually.' });
     }
 
     // Decrement capacity so the seat opens back up
@@ -126,7 +126,7 @@ module.exports = async (req, res) => {
         await resend.emails.send({
           from: fromAddress,
           to: email,
-          cc: ccInternal ? ccInternal.split(',').map(s => s.trim()) : undefined,
+          cc: ccInternal ? ccInternal.split(',').map(s => s.trim()).filter(Boolean) : undefined,
           reply_to: replyTo,
           subject: `Cancellation confirmed — ${formatDateNice(date)}`,
           html: renderHtml({ rec, date, mode, refundCents, policy }),

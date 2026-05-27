@@ -57,10 +57,11 @@ module.exports = async (req, res) => {
         const resend = new Resend(process.env.RESEND_API_KEY);
         const fromAddress = process.env.MAIL_FROM || 'DNA1575 <hello@dna1575.com>';
         const ccInternal = process.env.MAIL_CC_INTERNAL || '';
-        if (ccInternal) {
+        const toAddresses = ccInternal.split(',').map(s => s.trim()).filter(Boolean);
+        if (toAddresses.length) {
           await resend.emails.send({
             from: fromAddress,
-            to: ccInternal.split(',').map(s => s.trim()),
+            to: toAddresses,
             subject: `Waitlist: ${PACKAGE_LABEL[packageId]} (${date})`,
             html: `<p>Someone joined the waitlist:</p>
 <ul>

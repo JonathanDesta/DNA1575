@@ -40,10 +40,14 @@ module.exports = async (req, res) => {
   const offered = getOfferedDates(mode);
   const result = {};
 
+  if (offered.length === 0) {
+    return res.status(200).json({ classes: result, mode });
+  }
+
   const kvAvailable = !!((process.env.UPSTASH_REDIS_REST_URL || process.env.CRON_SECRET_KV_REST_API_URL) && (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN));
   if (!kvAvailable) {
-    // No KV — return all dates as 0 booked
-    offered.forEach(d => { result[d] = { booked: 0 }; });
+    // No KV — return all dates as 0 booked, none cancelled
+    offered.forEach(d => { result[d] = { booked: 0, cancelled: false }; });
     return res.status(200).json({ classes: result, mode });
   }
 

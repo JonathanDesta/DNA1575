@@ -348,6 +348,7 @@
     cancel: '/api/cancel-do',
     reschedule: '/api/cancel-reschedule',
   };
+  const MAX_CAPACITY = 6; // keep in sync with server-side MAX_CAPACITY
 
   function $(id) { return document.getElementById(id); }
 
@@ -399,7 +400,6 @@
 
   // ===== Booking list =====
   let currentToken = null;
-  let bookingsCache = [];
 
   async function loadBookings(token) {
     currentToken = token;
@@ -421,7 +421,6 @@
         }
         return;
       }
-      bookingsCache = data.bookings || [];
       lead.textContent = data.bookings.length === 0
         ? 'You have no upcoming bookings on this email.'
         : `Signed in as ${data.email}. ${data.bookings.length} upcoming class${data.bookings.length === 1 ? '' : 'es'}.`;
@@ -600,7 +599,7 @@
       const a = (availByMode[mode] || {})[iso] || {};
       const isCancelled = !!a.cancelled;
       const booked = a.booked || 0;
-      const remaining = 6 - booked;
+      const remaining = MAX_CAPACITY - booked;
       const opt = document.createElement('option');
       opt.value = iso;
       const modeTag = allowed.length > 1 ? ` · ${mode === 'inperson' ? 'In-Person' : 'Zoom'}` : '';

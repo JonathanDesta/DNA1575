@@ -11,7 +11,6 @@
 // email index reflect the change, customer gets a confirmation email.
 // No money moves.
 
-const Stripe = require('stripe');
 const { Redis } = require('@upstash/redis');
 const { Resend } = require('resend');
 const crypto = require('crypto');
@@ -169,7 +168,7 @@ module.exports = async (req, res) => {
         await resend.emails.send({
           from: fromAddress,
           to: email,
-          cc: ccInternal ? ccInternal.split(',').map(s => s.trim()) : undefined,
+          cc: ccInternal ? ccInternal.split(',').map(s => s.trim()).filter(Boolean) : undefined,
           reply_to: replyTo,
           subject: `Rescheduled — your class is now ${formatDateNice(newDate)}`,
           html: renderHtml({ rec, oldDate, oldMode, newDate, newMode }),
