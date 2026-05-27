@@ -1,6 +1,6 @@
 # DNA1575 — Site & Booking System (v2)
 
-Full setup takes ~75-100 minutes. Stripe verification runs in parallel and can take hours separately.  
+Full setup takes ~75-100 minutes. Stripe verification runs in parallel and can take hours separately.   
 
 ## What's in here
 
